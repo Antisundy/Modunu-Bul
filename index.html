@@ -1,0 +1,1983 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Modunu Bul. | Parti Kart Oyunu (2026)</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    body {
+      font-family: 'Plus Jakarta Sans', sans-serif;
+      background-color: #07070C;
+      color: #FFFFFF;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .app-shell {
+      width: 100%;
+      max-width: 420px;
+      min-height: 100vh;
+      max-height: 920px;
+      background: #0D0D14;
+      position: relative;
+      overflow-x: hidden;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px 18px;
+      box-shadow: 0 25px 60px rgba(0,0,0,0.9), 0 0 35px rgba(168, 85, 247, 0.12);
+    }
+    @media (min-width: 480px) {
+      .app-shell {
+        min-height: 760px;
+        height: 92vh;
+        border-radius: 40px;
+        border: 6px solid #222230;
+      }
+    }
+    .ambient-purple { background: radial-gradient(circle at 50% 0%, rgba(168, 85, 247, 0.28) 0%, rgba(13, 13, 20, 0) 65%), #0D0D14; }
+    .ambient-blue { background: radial-gradient(circle at 50% 0%, rgba(59, 130, 246, 0.28) 0%, rgba(13, 13, 20, 0) 65%), #0D0D14; }
+    .ambient-emerald { background: radial-gradient(circle at 50% 0%, rgba(16, 185, 129, 0.25) 0%, rgba(13, 13, 20, 0) 65%), #0D0D14; }
+    .ambient-amber { background: radial-gradient(circle at 50% 0%, rgba(245, 158, 11, 0.25) 0%, rgba(13, 13, 20, 0) 65%), #0D0D14; }
+
+    .glass-card {
+      background: rgba(24, 24, 38, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      backdrop-filter: blur(12px);
+    }
+    .neon-border-purple {
+      border: 1.5px solid #A855F7 !important;
+      box-shadow: 0 0 16px rgba(168, 85, 247, 0.28);
+    }
+    .neon-border-blue {
+      border: 1.5px solid #38BDF8 !important;
+      box-shadow: 0 0 16px rgba(56, 189, 248, 0.28);
+    }
+    .neon-border-emerald {
+      border: 1.5px solid #10B981 !important;
+      box-shadow: 0 0 16px rgba(16, 185, 129, 0.28);
+    }
+    .neon-border-amber {
+      border: 1.5px solid #F59E0B !important;
+      box-shadow: 0 0 16px rgba(245, 158, 11, 0.28);
+    }
+    .btn-primary {
+      background: linear-gradient(135deg, #C084FC 0%, #9333EA 100%);
+      color: #09090F;
+      font-weight: 800;
+      transition: transform 0.12s ease, opacity 0.15s ease;
+    }
+    .btn-primary:active { transform: scale(0.98); }
+    .btn-secondary {
+      background: linear-gradient(135deg, #38BDF8 0%, #2563EB 100%);
+      color: #FFFFFF;
+      font-weight: 800;
+      transition: transform 0.12s ease;
+    }
+    .btn-secondary:active { transform: scale(0.98); }
+    .btn-emerald {
+      background: linear-gradient(135deg, #34D399 0%, #10B981 100%);
+      color: #052E16;
+      font-weight: 800;
+    }
+    @keyframes floatUp {
+      0% { transform: translateY(0) scale(0.8); opacity: 1; }
+      100% { transform: translateY(-180px) scale(1.35); opacity: 0; }
+    }
+    .flying-emoji {
+      position: absolute;
+      bottom: 85px;
+      font-size: 28px;
+      pointer-events: none;
+      animation: floatUp 1.7s ease-out forwards;
+      z-index: 60;
+    }
+    input, textarea { user-select: text !important; }
+  </style>
+</head>
+<body>
+
+  <div id="app" class="app-shell ambient-purple"></div>
+
+  <script>
+    // =========================================================================
+    // 1. SUPABASE BAĞLANTISI (SENİN PROJE BİLGİLERİN)
+    // =========================================================================
+    const SUPABASE_URL = "https://soughgscbhxxrmikdbfm.supabase.co";
+    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNvdWdoZ3NjYmh4eHJtaWtkYmZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTIwNTU5NjYsImV4cCI6MjEwNzYzMTk2Nn0.gWF0rguyASmNddgNS8alPk5ndI3I0liatTzE4a0nSRw";
+    const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    // =========================================================================
+    // 2. OYUN SERİLERİ (6 ANA SERİ & 22 ALT PAKET)
+    // =========================================================================
+    const SERIES_DATA = [
+      {
+        id: "mizah",
+        title: "Mizah Serileri",
+        icon: "🎭",
+        desc: "Meme, Türk Mizah, Absürt, Kara Mizah",
+        packs: [
+          { id: "meme_pack", name: "1. Meme Pack", desc: "İnternet kültüründen tanıdık viral şakalar ve hızlı kahkahalar." },
+          { id: "turk_mizah", name: "2. Türk Mizah Pack", desc: "Gündelik hayattan tanıdık espriler ve yerel göndermeler." },
+          { id: "absurt_pack", name: "3. Absürt Pack", desc: "Beklenmedik sorular ve tuhaf senaryolar." },
+          { id: "kara_mizah", name: "4. Kara Mizah Pack", desc: "Sınırları zorlayan keskin ve ironik durumlar." }
+        ]
+      },
+      {
+        id: "sosyal",
+        title: "Sosyal / Sohbet",
+        icon: "💬",
+        desc: "İtiraf, Arkadaş Testi, Kim Daha, Tanışma",
+        packs: [
+          { id: "itiraf", name: "1. İtiraf Serisi", desc: "Kimsenin söyleyemediği gizli anlar." },
+          { id: "arkadas_testi", name: "2. Arkadaş Testi", desc: "Grubun birbirini ne kadar tanıdığını ölçen durumlar." },
+          { id: "kim_daha", name: "3. Kim Daha...?", desc: "Masadaki en'leri ortaya çıkaran eğlenceli sorular." },
+          { id: "tanisma", name: "4. Tanışma Pack", desc: "Buzları eriten eğlenceli ilk sohbet senaryoları." }
+        ]
+      },
+      {
+        id: "gamer",
+        title: "Gamer / Genç Kitle",
+        icon: "🎮",
+        desc: "Gamer, Twitch, Discord, Okul/Sınav",
+        packs: [
+          { id: "gamer_pack", name: "1. Gamer Pack", desc: "Ping, FPS düşüşü ve oyun dünyası krizleri." },
+          { id: "twitch_pack", name: "2. Twitch / Yayıncı Pack", desc: "Yayın, chat ve internet ünlüleri kültürü." },
+          { id: "discord_pack", name: "3. Discord Pack", desc: "Sesli sohbet ve sunucu ortamı esprileri." },
+          { id: "okul_sinav", name: "4. Okul / Sınav Pack", desc: "Vize, final, kampüs ve dershane dramları." }
+        ]
+      },
+      {
+        id: "zorlayici",
+        title: "Zorlayıcı / Yaratıcı",
+        icon: "🧠",
+        desc: "Zeka, Hikaye Tamamlama, Rol Yapma (RP)",
+        packs: [
+          { id: "zeka_pack", name: "1. Zeka Pack", desc: "Hızlı düşünmeyi gerektiren ince espriler." },
+          { id: "hikaye", name: "2. Hikaye Tamamlama", desc: "Yarım kalan komik olayları meme ile tamamlama." },
+          { id: "rp_pack", name: "3. Rol Yapma (RP) Pack", desc: "Farklı karakterlere bürünerek tepki verme." }
+        ]
+      },
+      {
+        id: "hizli",
+        title: "Hızlı Modlar",
+        icon: "⚡",
+        desc: "Blitz, Kapmaca, Random Chaos",
+        packs: [
+          { id: "blitz", name: "1. Blitz Mode", desc: "Reflekslerini konuşturan yüksek tempolu turlar." },
+          { id: "kapmaca", name: "2. Kapmaca Mode", desc: "En komik tepkiyi ilk yakalayanın parladığı seri." },
+          { id: "chaos", name: "3. Random Chaos Mode", desc: "Tüm kategorilerin birbirine girdiği tam kaos." }
+        ]
+      },
+      {
+        id: "temali",
+        title: "Temalı Seriler",
+        icon: "🌍",
+        desc: "Türkiye, Dünya, Tarih, Popüler Kültür",
+        packs: [
+          { id: "turkiye_pack", name: "1. Türkiye Pack", desc: "Toplu taşıma, misafirlik ve mahalle kültürümüz." },
+          { id: "dunya_pack", name: "2. Dünya Pack", desc: "Evrensel komik olaylar ve gezgin krizleri." },
+          { id: "tarih_pack", name: "3. Tarih Pack", desc: "Tarihi olaylara modern meme tepkileri." },
+          { id: "pop_kultur", name: "4. Popüler Kültür Pack", desc: "Diziler, filmler ve sosyal medya akımları." }
+        ]
+      }
+    ];
+
+    // =========================================================================
+    // 3. DURUM CÜMLELERİ HAVUZU (SENİN TÜM CÜMLELERİN EKSİKSİZ EKLENDİ)
+    // =========================================================================
+    const SITUATIONS = [
+      "Pazartesi sabahı alarm çaldığında tavanla bakıştığım o 5 dakika.",
+      "Annemin \"buraya gel sana bir şey yapmayacağım\" dediği o an.",
+      "Otobüste yanıma oturan teyzenin telefon ekranımı okumaya çalışması.",
+      "\"Sadece bir bölüm daha izleyip uyuyacağım\" yalanına kendimi inandırmam.",
+      "Kuaförden çıkarken aynaya bakıp \"çok güzel oldu\" deyip eve gidince ağlamam.",
+      "Diyete pazartesi başlayıp salı öğlen İskender gömmem.",
+      "\"Ben hallederim\" dedikten tam 5 dakika sonra gelen o pişmanlık hissi.",
+      "Misafirlikte en sevdiğim yemeğin bittiğini gördüğüm anki yıkılışım.",
+      "Sadece bakıp çıkacağım diyerek girdiğim mağazada tüm maaşı bırakmam.",
+      "Arkadaşımın anlattığı kötü espriye ayıp olmasın diye gülerkenki yüz ifadem.",
+      "İnternet kesilince Google Chrome dinazorunu koştururken kendi rekorumu kırmam.",
+      "Kurye kapıya geldiğinde pijamalarımla verdiğim o yaşam mücadelesi.",
+      "Eski sevgilimin yeni sevgilisine stalk yaparken yanlışlıkla fotoğraf beğenmem.",
+      "Gece 3'te aniden aklıma gelen 5 yıl önceki rezil olduğum anı.",
+      "Kulaklık takılıyken dışarıdaki bütün sesleri duyduğumu sanıp bağıra bağıra şarkı söylemem.",
+      "Alarmı 5 dakika erteleye erteleye öğleni etmem.",
+      "\"Hazırım, çıkıyorum\" deyip henüz duşa bile girmemiş olmam.",
+      "Yemek siparişi verdikten sonra camda kurye yolu gözleyen o masum köylü.",
+      "Toplu taşımada ayakta uyurken kafamın öndeki teyzeye çarpması.",
+      "Arkadaş ortamında hesap ödenirken aniden gelen ayakkabı bağlama ihtiyacı.",
+      "Markette kasa sırası beklerken yan kasanın açıldığını duyduğum anki deparım.",
+      "Şifremi unuttuğumda yeni şifre oluştururken \"eski şifrenizle aynı olamaz\" uyarısı almam.",
+      "Odadan bir şey almaya gidip ne alacağımı unuttuğum için geri dönmem.",
+      "Fotoğraf çekilirken içime çektiğim göbeğimin nefes verince serbest kalması.",
+      "\"Aynen aynen\" diyerek dinlemediğim konuyu geçiştirmeye çalışmam.",
+      "Çayımı soğutmak için beklerken tamamen unutup buz gibi çay içmem.",
+      "Yeni aldığım beyaz ayakkabıyla yağmura yakalanmam.",
+      "Dışarı çıkmak için hazırlandıktan sonra arkadaşımın \"iptal etsek olur mu?\" mesajı atması.",
+      "\"Kilo vermem lazım\" dedikten hemen sonra televizyonda çıkan yemek reklamını izlemem.",
+      "Karanlık odada yürürken serçe parmağımı masanın köşesine vurduğumda hissettiğim o evrensel acı.",
+      "Sınavda en kolay soruyu yanlış yaptığını fark ettiğinde...",
+      "Otobüsü tam yakalayacakken kapının kapanmasıyla...",
+      "Marketten çıkınca fişi almayı unuttuğunu fark ettiğinde...",
+      "YouTube’da “son bir video” deyip 3 saat geçtiğinde...",
+      "Instagram’da eski fotoğraflarına bakarken yanlışlıkla like attığında...",
+      "Derste hoca gözünün içine bakıp soru sorduğunda...",
+      "Kulaklığın tek tarafı çalışmadığında...",
+      "Şarja taktığını sandığın telefonun aslında takılı olmadığını fark ettiğinde...",
+      "Yağmurda şemsiyesiz yakalandığında...",
+      "Evden çıkınca anahtarı içeride unuttuğunu fark ettiğinde...",
+      "Google’a girdiğin şeyi unutup boş boş baktığında...",
+      "Birine el sallayıp aslında sana sallamadığını fark ettiğinde...",
+      "Koşarak yetiştiğin otobüsün yanlış hat olduğunu gördüğünde...",
+      "Online derste kamerayı açık unuttuğunu fark ettiğinde...",
+      "Yanlış kişiye mesaj attığını fark ettiğin o saniye...",
+      "Tam konuşmaya girecekken lafının kesildiği an...",
+      "Birinin sana “hatırladın mı beni?” dediğinde...",
+      "Sipariş verdiğin şeyle gelen şeyin alakasız olması...",
+      "Alarmı kapatıp tekrar uyuyup geç kaldığında...",
+      "Film izlerken en heyecanlı yerde internet kesildiğinde...",
+      "Biri sana spoiler verdiğinde...",
+      "Yeni aldığın ayakkabıya ilk çamur bulaştığında...",
+      "Topluluk içinde adının yanlış söylendiğinde...",
+      "Sessiz ortamda hapşırığı tutmaya çalışırken...",
+      "Telefonda konuşurken herkesin seni dinlediğini fark ettiğinde...",
+      "Düşecek gibi olup son anda toparladığında...",
+      "Sınavdan çıktıktan sonra herkesin farklı cevaplar söylediğini duyduğunda...",
+      "Kahve alırken adını komik bir şekilde yazdıklarında...",
+      "Arkadaş ortamında espri yapıp kimsenin gülmediğinde...",
+      "Bir şey anlatırken kimsenin dinlemediğini fark ettiğinde...",
+      "Yanlış sınıfa girip herkesin sana baktığı an...",
+      "Dondurma yerken yere düşürdüğünde...",
+      "Kulaklıkla müzik dinlerken dışarı ses verdiğini fark ettiğinde...",
+      "Biri sana “değişmişsin” dediğinde...",
+      "Telefonu cebinde sanıp her yeri aradığında...",
+      "Uzun zamandır konuşmadığın biri aniden mesaj attığında...",
+      "Tam dışarı çıkacakken planların iptal olduğunda...",
+      "Uyandığında alarmın çalmadığını fark ettiğinde...",
+      "Bir şey anlatırken kelimeyi unuttuğunda...",
+      "İlk defa gittiğin yerde kaybolduğunda...",
+      "Kargoyu beklerken “geldik yoktunuz” mesajı geldiğinde...",
+      "Yeni tanıştığın kişinin adını 2 saniyede unuttuğunda...",
+      "Yemek yerken üstüne döktüğünde...",
+      "Fotoğraf çekilirken ne yapacağını bilemediğinde...",
+      "Bir ortamda tek başına kaldığında...",
+      "Arkadaşların plan yapıp seni çağırmadığını fark ettiğinde...",
+      "Telefonun donup hiçbir şey yapamadığında...",
+      "Tam yazdığın uzun mesajın silindiğinde...",
+      "Sınavdan önce her şeyi unutmuş gibi hissettiğinde...",
+      "Birine laf atıp yanlış anlaşıldığında...",
+      "Yanlışlıkla sesli mesaj attığında...",
+      "Evde tek başınayken garip sesler duyduğunda...",
+      "Yeni tanıştığın biri sana aşırı samimi davrandığında...",
+      "Bir şey ararken neden aradığını unuttuğunda...",
+      "Aynaya bakıp saçının hiç beklediğin gibi olmadığını gördüğünde...",
+      "“Bir şey söyleyecektim” deyip unutunca...",
+      "Dışarı çıkınca havanın düşündüğünden çok farklı olduğunu fark ettiğinde...",
+      "Sınav kağıdını erken verip sonra hatanı fark ettiğinde...",
+      "Telefonda konuşurken yanlışlıkla hoparlörü açtığında...",
+      "Biri seni yanlış biriyle karıştırdığında...",
+      "Aynı hikayeyi 3. kez anlatmak zorunda kaldığında...",
+      "Film izlerken herkesin senden önce anlaması...",
+      "Arkadaşının söylediği sırrı yanlışlıkla başkasına söylediğinde...",
+      "Biri sana bakarken neden baktığını anlamadığında...",
+      "Sadece 5 dakika uyuyayım deyip 3 saat uyuduğunda...",
+      "Telefonu düşürüp yavaşça yere düşmesini izlediğinde...",
+      "Birine selam verip karşılık alamadığında...",
+      "Aynı anda konuşmaya başlayıp “sen söyle” dediğiniz an...",
+      "Online oyunda ping yükseldiğinde...",
+      "Yeni bir ortama girip kimseyi tanımadığında...",
+      "Biri sana ciddi bir şey anlatırken gülme tuttuğunda...",
+      "Kendi kendine konuşurken yakalandığında...",
+      "Aynı kişiye ikinci kez kendini tanıttığında...",
+      "Markette kasada sıra sana gelince panik olduğunda...",
+      "Yeni saç kestirip herkesin fark etmesini beklediğinde...",
+      "Telefonun cebinde titreşim sanıp aslında titreşmemesi...",
+      "Bir şeyi çok iyi yaptığını sanıp aslında yanlış yaptığını öğrendiğinde...",
+      "Uzun zamandır görmediğin biriyle göz göze geldiğinde...",
+      "Arkadaşın “sana bir şey diyeceğim ama kızma” dediğinde...",
+      "Tam konuşacakken sesinin çatladığında...",
+      "Çok açken yemeğin geç geldiğinde...",
+      "Sınavda kaleminin yazmamaya başlaması...",
+      "Biri sana “çok değiştin” dediğinde...",
+      "Evden çıkınca geri dönmek zorunda kaldığında...",
+      "Yeni aldığın telefonun ilk çizildiği an...",
+      "Herkes gülerken neden güldüğünü anlamadığında...",
+      "Biri sana “şimdi sana bir şey göstereceğim” dediğinde...",
+      "Arkadaş grubunda herkes telefona bakarken...",
+      "Şarj kablosunun sadece belli açıyla çalıştığında...",
+      "Tam uyuyacakken birinin mesaj attığında...",
+      "Sabah aynaya bakınca kendini tanıyamadığında...",
+      "Birine bakarken göz göze gelince...",
+      "Sessiz ortamda telefonun son ses çaldığında...",
+      "Biri sana beklemediğin bir iltifat ettiğinde...",
+      "Tam motive olmuşken moralinin bozulduğunda...",
+      "“Hiçbir şey olmaz” deyip her şey olduğunda...",
+      "Gece 3’te uykun kaçıp hayatını sorguladığında...",
+      "Telefonunu düşürüp ekranın kırılıp kırılmadığını kontrol ederken...",
+      "WhatsApp’ta “yazıyor...” görüp mesaj gelmediğinde..."
+    ];
+
+    // =========================================================================
+    // 4. GÖRSEL MEME KARTLARI HAVUZU (KESİLMEYEN DİNAMİK POSTER KARTLARI)
+    // =========================================================================
+    const MEME_CARDS = [
+      { id: "m1", emoji: "🐶🔥☕", title: "Her Şey Yolunda (This is Fine)", sub: "Etraf yanarken çayımı yudumluyorum", bg: "from-amber-700/60 to-red-950" },
+      { id: "m2", emoji: "🐱☕💤", title: "Uyanamayan Kedi", sub: "Ruhum hala yatakta kaldı", bg: "from-purple-800/60 to-slate-900" },
+      { id: "m3", emoji: "🦝🍞👀", title: "Suçüstü Yakalanan Rakun", sub: "Hiçbir şey olmamış gibi davran", bg: "from-sky-800/60 to-slate-900" },
+      { id: "m4", emoji: "🤡🎈🪞", title: "Palyaço Makyajı Yapan Ben", sub: "Yine kendi kendimizi kandırdık", bg: "from-rose-800/60 to-zinc-900" },
+      { id: "m5", emoji: "🐼🛋️🔋", title: "Sosyal Pilim %0", sub: "Beni buradan hemen ışınlayın", bg: "from-emerald-800/60 to-zinc-900" },
+      { id: "m6", emoji: "🦊🕶️✨", title: "Profesyonel Bahane Üretici", sub: "Kesinlikle planlı bir hareketti", bg: "from-indigo-800/60 to-zinc-900" },
+      { id: "m7", emoji: "🙀📉💸", title: "Cüzdan Boşalınca Eşgal", sub: "Finansal olarak toparlanamayacağım", bg: "from-red-800/60 to-zinc-900" },
+      { id: "m8", emoji: "🐸☕👀", title: "Kermit Çay Yudumluyor", sub: "Ama bu benim meselem değil tabii", bg: "from-teal-800/60 to-zinc-900" },
+      { id: "m9", emoji: "🐵🙈⚡", title: "Gözlerini Kaçıran Kukla", sub: "Görmedim, duymadım, bilmiyorum", bg: "from-amber-800/60 to-zinc-900" },
+      { id: "m10", emoji: "🧠🌌🚀", title: "Galaksi Beyin", sub: "IQ seviyem şu an sınırları aştı", bg: "from-fuchsia-800/60 to-indigo-950" },
+      { id: "m11", emoji: "🐹🥺👉👈", title: "Masum Köylü Hamster", sub: "Küçük bir hata yaptık abartmayalım", bg: "from-pink-800/60 to-zinc-900" },
+      { id: "m12", emoji: "🦆🔪🔥", title: "Kaos İsteyen Ördek", sub: "Barış hiçbir zaman bir seçenek değildi", bg: "from-orange-800/60 to-zinc-900" },
+      { id: "m13", emoji: "🧍‍♂️🚪💨", title: "Sessizce Ortamdan Uzayan Ben", sub: "Bana müsaade arkadaşlar", bg: "from-cyan-800/60 to-zinc-900" },
+      { id: "m14", emoji: "🎭🙂😭", title: "Dışı Gülen İçi Ağlayan Maske", sub: "İyiyim ya ne olsun süperim", bg: "from-violet-800/60 to-zinc-900" },
+      { id: "m15", emoji: "🦖🛜❌", title: "Bağlantısı Kopan T-Rex", sub: "Beyin.exe yanıt vermiyor", bg: "from-lime-800/60 to-zinc-900" },
+      { id: "m16", emoji: "🍽️😼🔥", title: "Masadaki Kediye Bağıran Abla", sub: "Benim ne suçum vardı şimdi?", bg: "from-purple-700/60 to-indigo-950" },
+      { id: "m17", emoji: "🕶️🕺⚰️", title: "Dans Eden Tabutçular", sub: "Geçmiş olsun, helvamızı kavurun", bg: "from-slate-700/60 to-black" },
+      { id: "m18", emoji: "🏃‍♂️💨🚨", title: "Arkana Bakmadan Kaç!", sub: "Saniyede 100 km hıza ulaştım", bg: "from-blue-800/60 to-zinc-900" },
+      { id: "m19", emoji: "🧐🍷🎩", title: "Asil ve Üstün Bakış", sub: "Köylüler yine ne anlatıyor acaba", bg: "from-amber-700/60 to-zinc-900" },
+      { id: "m20", emoji: "🤯📊📐", title: "Kafasında Formüller Uçuşan Kadın", sub: "Hesaplarıma göre bu imkansız", bg: "from-emerald-700/60 to-zinc-900" }
+    ];
+
+    const AVATARS = ["😎", "🦊", "🐱", "🚀", "🐼", "🦁", "🐸", "🦄"];
+
+    // =========================================================================
+    // 5. WEB AUDIO SES MOTORU (KALP ATIŞI, ALKIŞ, CIRCIR BÖCEĞİ, TIKLAMA)
+    // =========================================================================
+    const SoundFX = {
+      enabled: true,
+      ctx: null,
+      init() {
+        if (!this.ctx) {
+          const AudioCtx = window.AudioContext || window.webkitAudioContext;
+          if (AudioCtx) this.ctx = new AudioCtx();
+        }
+      },
+      play(type) {
+        if (!this.enabled) return;
+        try {
+          this.init();
+          if (!this.ctx) return;
+          const now = this.ctx.currentTime;
+          if (type === "tick") {
+            const osc = this.ctx.createOscillator();
+            const g = this.ctx.createGain();
+            osc.type = "sine";
+            osc.frequency.setValueAtTime(520, now);
+            g.gain.setValueAtTime(0.08, now);
+            g.gain.exponentialRampToValueAtTime(0.001, now + 0.08);
+            osc.connect(g); g.connect(this.ctx.destination);
+            osc.start(now); osc.stop(now + 0.09);
+          } else if (type === "heartbeat") {
+            [0, 0.16].forEach(offset => {
+              const osc = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              osc.type = "triangle";
+              osc.frequency.setValueAtTime(95, now + offset);
+              g.gain.setValueAtTime(0.22, now + offset);
+              g.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.12);
+              osc.connect(g); g.connect(this.ctx.destination);
+              osc.start(now + offset); osc.stop(now + offset + 0.13);
+            });
+          } else if (type === "applause") {
+            [523.25, 659.25, 783.99, 1046.5].forEach((freq, idx) => {
+              const osc = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              osc.type = "triangle";
+              osc.frequency.setValueAtTime(freq, now + idx * 0.08);
+              g.gain.setValueAtTime(0.14, now + idx * 0.08);
+              g.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.08 + 0.25);
+              osc.connect(g); g.connect(this.ctx.destination);
+              osc.start(now + idx * 0.08); osc.stop(now + idx * 0.08 + 0.26);
+            });
+          } else if (type === "cricket") {
+            [0, 0.12, 0.24].forEach(offset => {
+              const osc = this.ctx.createOscillator();
+              const g = this.ctx.createGain();
+              osc.type = "sine";
+              osc.frequency.setValueAtTime(4200, now + offset);
+              g.gain.setValueAtTime(0.06, now + offset);
+              g.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.07);
+              osc.connect(g); g.connect(this.ctx.destination);
+              osc.start(now + offset); osc.stop(now + offset + 0.08);
+            });
+          }
+        } catch (e) {}
+      }
+    };
+
+    // =========================================================================
+    // 6. UYGULAMA DURUMU (STATE)
+    // =========================================================================
+    const state = {
+      screen: "home", // home, howto, profile, online_choice, join_room, setup_score, setup_category, setup_pack, bot_lobby, lobby, qr_modal, round_intro, custom_prompt, picking, waiting_picks, timeout_pass, voting, reveal, sudden_death, podium, badges, story_card
+      showExitModal: false,
+      mode: "bot", // 'online' | 'bot'
+      myId: crypto.randomUUID ? crypto.randomUUID() : "p_" + Math.random().toString(36).substring(2, 11),
+      playerName: "",
+      playerAvatar: "😎",
+      nameError: "",
+
+      // Oda ve Kurulum
+      roomCode: "",
+      joinInput: "",
+      joinError: "",
+      isAdmin: false,
+      targetScore: 3000,
+      selectedCategory: "mizah",
+      selectedPack: "turk_mizah",
+
+      // Oyun İçi Veriler
+      currentRound: 1,
+      currentSituation: "",
+      customPromptText: "",
+      timer: 20,
+      botLobbyTimer: 10,
+      hand: [],
+      selectedCardId: null,
+      hasSubmittedCard: false,
+      votedPlayerId: null,
+      usedSituations: [],
+
+      // Jokerler
+      jokerRefreshUsed: false,
+      jokerDoubleUsed: false,
+      jokerDoubleActive: false,
+
+      // Oyuncular Listesi
+      players: [],
+      suddenDeathFinalists: [],
+      bestMoment: {
+        situation: "Diyete pazartesi başlayıp salı öğlen İskender gömmem.",
+        card: MEME_CARDS[0],
+        winnerName: "Cem",
+        votes: 2
+      }
+    };
+
+    let mainInterval = null;
+    let botTimeoutIds = [];
+    let realtimeChannel = null;
+
+    // =========================================================================
+    // 7. YARDIMCI FONKSİYONLAR VE DOĞRULAMALAR
+    // =========================================================================
+    function clearAllTimers() {
+      if (mainInterval) clearInterval(mainInterval);
+      mainInterval = null;
+      botTimeoutIds.forEach(id => clearTimeout(id));
+      botTimeoutIds = [];
+    }
+
+    // İsim Kuralı: En az 3 karakter, harf ve sayı olabilir, noktalama işareti yasak
+    function sanitizePlayerName(val) {
+      return val.replace(/[^a-zA-Z0-9ğüşıöçĞÜŞİÖÇ ]/g, "").slice(0, 16);
+    }
+
+    function isValidPlayerName(name) {
+      const cleaned = name.trim();
+      return cleaned.length >= 3 && /^[a-zA-Z0-9ğüşıöçĞÜŞİÖÇ ]+$/.test(cleaned);
+    }
+
+    function getRandomHand(excludeIds = []) {
+      const pool = MEME_CARDS.filter(c => !excludeIds.includes(c.id));
+      const shuffled = [...pool].sort(() => Math.random() - 0.5);
+      return shuffled.slice(0, 4);
+    }
+
+    function getNextSituation() {
+      const available = SITUATIONS.filter(s => !state.usedSituations.includes(s));
+      const pool = available.length > 0 ? available : SITUATIONS;
+      const chosen = pool[Math.floor(Math.random() * pool.length)];
+      state.usedSituations.push(chosen);
+      return chosen;
+    }
+
+    function getCardById(id) {
+      return MEME_CARDS.find(c => c.id === id) || MEME_CARDS[0];
+    }
+
+    function spawnEmoji(emoji) {
+      const app = document.getElementById("app");
+      if (!app) return;
+      const el = document.createElement("div");
+      el.className = "flying-emoji";
+      el.style.left = (15 + Math.random() * 70) + "%";
+      el.textContent = emoji;
+      app.appendChild(el);
+      SoundFX.play("tick");
+      setTimeout(() => el.remove(), 1700);
+
+      if (state.mode === "online" && realtimeChannel) {
+        realtimeChannel.send({
+          type: "broadcast",
+          event: "emoji",
+          payload: { emoji }
+        });
+      }
+    }
+
+    // =========================================================================
+    // 8. ANA MENÜYE ÇIKIŞ (SOL ÜST LOGO VEYA SAĞ ÜST ÇIKIŞ İKONU)
+    // =========================================================================
+    function requestExitToMenu() {
+      if (state.screen === "home") return;
+      state.showExitModal = true;
+      render();
+    }
+
+    async function confirmExitToMenu() {
+      clearAllTimers();
+      if (state.mode === "online" && state.roomCode) {
+        try {
+          await sb.from("players").delete().eq("id", state.myId);
+        } catch (e) {}
+      }
+      if (realtimeChannel) {
+        sb.removeChannel(realtimeChannel);
+        realtimeChannel = null;
+      }
+      state.showExitModal = false;
+      state.roomCode = "";
+      state.joinInput = "";
+      state.currentRound = 1;
+      state.jokerRefreshUsed = false;
+      state.jokerDoubleUsed = false;
+      state.jokerDoubleActive = false;
+      state.screen = "home";
+      render();
+    }
+
+    // =========================================================================
+    // 9. BOT MODU (ALİ, MEHMET, OSMAN) VE 10 SN LOBİ SAYACI
+    // =========================================================================
+    function startBotLobby() {
+      clearAllTimers();
+      state.isAdmin = true;
+      state.roomCode = String(Math.floor(100000 + Math.random() * 900000));
+      state.currentRound = 1;
+      state.jokerRefreshUsed = false;
+      state.jokerDoubleUsed = false;
+      state.jokerDoubleActive = false;
+      state.usedSituations = [];
+
+      state.players = [
+        { id: state.myId, name: state.playerName, avatar: state.playerAvatar, is_admin: true, is_bot: false, score: 0, selected_card_id: null, voted_for_player_id: null, joker_double_active: false, zero_vote_rounds: 0, last_second_picks: 0, max_votes_in_single_round: 0 },
+        { id: "bot_ali", name: "Ali", avatar: "🤖", is_admin: false, is_bot: true, score: 0, selected_card_id: null, voted_for_player_id: null, joker_double_active: false, zero_vote_rounds: 0, last_second_picks: 1, max_votes_in_single_round: 0 },
+        { id: "bot_mehmet", name: "Mehmet", avatar: "🤖", is_admin: false, is_bot: true, score: 0, selected_card_id: null, voted_for_player_id: null, joker_double_active: false, zero_vote_rounds: 0, last_second_picks: 0, max_votes_in_single_round: 0 },
+        { id: "bot_osman", name: "Osman", avatar: "🤖", is_admin: false, is_bot: true, score: 0, selected_card_id: null, voted_for_player_id: null, joker_double_active: false, zero_vote_rounds: 0, last_second_picks: 0, max_votes_in_single_round: 0 }
+      ];
+
+      state.botLobbyTimer = 10;
+      state.screen = "bot_lobby";
+      render();
+
+      mainInterval = setInterval(() => {
+        state.botLobbyTimer--;
+        SoundFX.play("tick");
+        if (state.botLobbyTimer <= 0) {
+          clearAllTimers();
+          startNewRound();
+        } else {
+          render();
+        }
+      }, 1000);
+    }
+
+    // =========================================================================
+    // 10. ÇEVRİMİÇİ (SUPABASE REALTIME) ODA KURMA & KATILMA
+    // =========================================================================
+    async function createOnlineRoom() {
+      const code = String(Math.floor(100000 + Math.random() * 900000));
+      state.roomCode = code;
+      state.isAdmin = true;
+      state.currentRound = 1;
+      const firstSituation = getNextSituation();
+
+      try {
+        await sb.from("rooms").insert({
+          code: code,
+          admin_id: state.myId,
+          status: "lobby",
+          target_score: state.targetScore,
+          main_category: state.selectedCategory,
+          sub_pack: state.selectedPack,
+          current_round: 1,
+          current_situation: firstSituation
+        });
+
+        await sb.from("players").insert({
+          id: state.myId,
+          room_code: code,
+          name: state.playerName,
+          avatar: state.playerAvatar,
+          is_admin: true,
+          is_bot: false,
+          score: 0
+        });
+
+        subscribeToRoom(code);
+        await fetchRoomData(code);
+        state.screen = "lobby";
+        render();
+      } catch (err) {
+        alert("Oda kurulurken bağlantı hatası oluştu: " + err.message);
+      }
+    }
+
+    async function joinOnlineRoom() {
+      if (state.joinInput.length !== 6) {
+        state.joinError = "Lütfen 6 haneli sayısal oda kodunu eksiksiz girin.";
+        render();
+        return;
+      }
+      try {
+        const { data: room, error } = await sb.from("rooms").select("*").eq("code", state.joinInput).single();
+        if (error || !room) {
+          state.joinError = "Bu koda ait aktif bir oda bulunamadı!";
+          render();
+          return;
+        }
+        state.roomCode = room.code;
+        state.isAdmin = false;
+        state.targetScore = room.target_score;
+        state.selectedCategory = room.main_category;
+        state.selectedPack = room.sub_pack;
+
+        await sb.from("players").upsert({
+          id: state.myId,
+          room_code: room.code,
+          name: state.playerName,
+          avatar: state.playerAvatar,
+          is_admin: false,
+          is_bot: false,
+          score: 0
+        });
+
+        subscribeToRoom(room.code);
+        await fetchRoomData(room.code);
+        state.screen = "lobby";
+        render();
+      } catch (e) {
+        state.joinError = "Odaya katılırken hata oluştu.";
+        render();
+      }
+    }
+
+    async function fetchRoomData(code) {
+      const { data: room } = await sb.from("rooms").select("*").eq("code", code).single();
+      const { data: players } = await sb.from("players").select("*").eq("room_code", code).order("joined_at", { ascending: true });
+      if (players) state.players = players;
+      if (room) {
+        state.targetScore = room.target_score;
+        state.selectedCategory = room.main_category;
+        state.selectedPack = room.sub_pack;
+        state.currentRound = room.current_round;
+        state.currentSituation = room.current_situation || SITUATIONS[0];
+        syncOnlineScreenWithStatus(room.status);
+      }
+    }
+
+    function subscribeToRoom(code) {
+      if (realtimeChannel) sb.removeChannel(realtimeChannel);
+      realtimeChannel = sb.channel("room_" + code)
+        .on("postgres_changes", { event: "*", schema: "public", table: "rooms", filter: "code=eq." + code }, payload => {
+          fetchRoomData(code);
+        })
+        .on("postgres_changes", { event: "*", schema: "public", table: "players", filter: "room_code=eq." + code }, payload => {
+          fetchRoomData(code);
+        })
+        .on("broadcast", { event: "emoji" }, payload => {
+          if (payload.payload && payload.payload.emoji) {
+            const app = document.getElementById("app");
+            const el = document.createElement("div");
+            el.className = "flying-emoji";
+            el.style.left = (15 + Math.random() * 70) + "%";
+            el.textContent = payload.payload.emoji;
+            app.appendChild(el);
+            setTimeout(() => el.remove(), 1700);
+          }
+        })
+        .subscribe();
+    }
+
+    function syncOnlineScreenWithStatus(status) {
+      if (status === "lobby" && state.screen !== "lobby" && state.screen !== "qr_modal") {
+        state.screen = "lobby";
+        render();
+      } else if (status === "picking" && !["picking", "waiting_picks", "timeout_pass"].includes(state.screen)) {
+        beginPickingPhaseUI();
+      } else if (status === "voting" && state.screen !== "voting") {
+        beginVotingPhaseUI();
+      } else if (status === "reveal" && state.screen !== "reveal") {
+        beginRevealPhaseUI();
+      } else if (status === "finished" && !["podium", "badges", "story_card"].includes(state.screen)) {
+        state.screen = "podium";
+        render();
+      } else {
+        render();
+      }
+    }
+
+    // =========================================================================
+    // 11. OYUN DÖNGÜSÜ: TUR BAŞLANGICI, 20 SN KART SEÇİMİ, 10 SN OYLAMA, +300 PUAN
+    // =========================================================================
+    async function startNewRound() {
+      clearAllTimers();
+      state.selectedCardId = null;
+      state.hasSubmittedCard = false;
+      state.votedPlayerId = null;
+      state.jokerDoubleActive = false;
+      state.hand = getRandomHand();
+
+      // Oyuncu seçimlerini sıfırla
+      state.players.forEach(p => {
+        p.selected_card_id = null;
+        p.voted_for_player_id = null;
+        p.joker_double_active = false;
+      });
+
+      // Her 5 turda bir "Kendi Durumunu Yaz" Serbest Turu
+      if (state.currentRound > 1 && state.currentRound % 5 === 0 && state.isAdmin) {
+        state.customPromptText = "";
+        state.screen = "custom_prompt";
+        state.timer = 15;
+        render();
+        mainInterval = setInterval(() => {
+          state.timer--;
+          if (state.timer <= 0) {
+            clearAllTimers();
+            state.currentSituation = state.customPromptText.trim() || getNextSituation();
+            proceedToRoundIntro();
+          } else {
+            render();
+          }
+        }, 1000);
+        return;
+      }
+
+      state.currentSituation = getNextSituation();
+      proceedToRoundIntro();
+    }
+
+    async function proceedToRoundIntro() {
+      clearAllTimers();
+      if (state.mode === "online" && state.isAdmin) {
+        await sb.from("players").update({ selected_card_id: null, voted_for_player_id: null, joker_double_active: false }).eq("room_code", state.roomCode);
+        await sb.from("rooms").update({
+          status: "picking",
+          current_round: state.currentRound,
+          current_situation: state.currentSituation
+        }).eq("code", state.roomCode);
+      }
+
+      state.screen = "round_intro";
+      render();
+      setTimeout(() => {
+        beginPickingPhaseUI();
+      }, 1800);
+    }
+
+    function beginPickingPhaseUI() {
+      clearAllTimers();
+      if (state.hand.length === 0) state.hand = getRandomHand();
+      state.selectedCardId = null;
+      state.hasSubmittedCard = false;
+      state.votedPlayerId = null;
+      state.timer = 20; // Ortadaki karta göre kart atma süremiz 20 saniye
+      state.screen = "picking";
+      render();
+
+      // Botlarla Oyna modunda Ali, Mehmet ve Osman kesinlikle kart seçimi yapar
+      if (state.mode === "bot") {
+        const bots = state.players.filter(p => p.is_bot);
+        bots.forEach((bot, idx) => {
+          const delay = (idx === 0 ? 3500 : idx === 1 ? 6500 : 11000);
+          const tid = setTimeout(() => {
+            const usedIds = state.players.map(p => p.selected_card_id).filter(Boolean);
+            const available = MEME_CARDS.filter(c => !usedIds.includes(c.id));
+            const randomCard = available[Math.floor(Math.random() * available.length)] || MEME_CARDS[idx];
+            bot.selected_card_id = randomCard.id;
+            if (state.screen === "waiting_picks") render();
+          }, delay);
+          botTimeoutIds.push(tid);
+        });
+      }
+
+      // 20 Saniyelik Gerçek Sayaç (Kart seçilince sıfırlanmaz, arkada işler)
+      mainInterval = setInterval(() => {
+        state.timer--;
+        if (state.timer <= 5 && state.timer > 0) SoundFX.play("heartbeat");
+        else if (state.timer > 5) SoundFX.play("tick");
+
+        if (state.timer <= 0) {
+          clearAllTimers();
+          // Botların hepsi seçmiş olduğundan emin ol
+          if (state.mode === "bot") {
+            state.players.filter(p => p.is_bot).forEach((bot, idx) => {
+              if (!bot.selected_card_id) bot.selected_card_id = MEME_CARDS[(idx + 2) % MEME_CARDS.length].id;
+            });
+          }
+
+          if (!state.hasSubmittedCard) {
+            // Süre bittiğinde kart seçmeyen kullanıcı pas geçer ve oy veremez
+            state.screen = "timeout_pass";
+            render();
+            setTimeout(() => {
+              triggerVotingPhase();
+            }, 2200);
+          } else {
+            triggerVotingPhase();
+          }
+        } else {
+          render();
+        }
+      }, 1000);
+    }
+
+    async function submitSelectedCard() {
+      if (!state.selectedCardId || state.hasSubmittedCard) return;
+      state.hasSubmittedCard = true;
+      if (state.jokerDoubleActive) state.jokerDoubleUsed = true;
+
+      const me = state.players.find(p => p.id === state.myId);
+      if (me) {
+        me.selected_card_id = state.selectedCardId;
+        me.joker_double_active = state.jokerDoubleActive;
+        if (state.timer <= 3) me.last_second_picks = (me.last_second_picks || 0) + 1;
+      }
+
+      if (state.mode === "online") {
+        await sb.from("players").update({
+          selected_card_id: state.selectedCardId,
+          joker_double_active: state.jokerDoubleActive
+        }).eq("id", state.myId);
+      }
+
+      // Süre sıfırlanmaz, diğer oyuncular ve sürenin bitişi beklenir
+      state.screen = "waiting_picks";
+      render();
+    }
+
+    async function triggerVotingPhase() {
+      if (state.mode === "online" && state.isAdmin) {
+        await sb.from("rooms").update({ status: "voting" }).eq("code", state.roomCode);
+      }
+      beginVotingPhaseUI();
+    }
+
+    function beginVotingPhaseUI() {
+      clearAllTimers();
+      state.votedPlayerId = null;
+      state.timer = 10; // Oyuncuların kartını oylama süremiz 10 saniye
+      state.screen = "voting";
+      render();
+
+      // Botlar oylama aşamasında kendi kartları hariç rastgele oy verir
+      if (state.mode === "bot") {
+        const activePlayers = state.players.filter(p => p.selected_card_id);
+        state.players.filter(p => p.is_bot).forEach((bot, i) => {
+          const tid = setTimeout(() => {
+            const candidates = activePlayers.filter(p => p.id !== bot.id);
+            if (candidates.length > 0) {
+              const target = candidates[Math.floor(Math.random() * candidates.length)];
+              bot.voted_for_player_id = target.id;
+            }
+          }, 2000 + i * 1500);
+          botTimeoutIds.push(tid);
+        });
+      }
+
+      mainInterval = setInterval(() => {
+        state.timer--;
+        if (state.timer <= 4 && state.timer > 0) SoundFX.play("heartbeat");
+        if (state.timer <= 0) {
+          clearAllTimers();
+          triggerRevealPhase();
+        } else {
+          render();
+        }
+      }, 1000);
+    }
+
+    async function castVote(targetPlayerId) {
+      // Kart seçmeyen oyuncu oy veremez, kendi kartına oy veremez
+      if (!state.hasSubmittedCard || state.votedPlayerId || targetPlayerId === state.myId) return;
+      state.votedPlayerId = targetPlayerId;
+      const me = state.players.find(p => p.id === state.myId);
+      if (me) me.voted_for_player_id = targetPlayerId;
+      SoundFX.play("tick");
+
+      if (state.mode === "online") {
+        await sb.from("players").update({ voted_for_player_id: targetPlayerId }).eq("id", state.myId);
+      }
+      render();
+    }
+
+    async function triggerRevealPhase() {
+      // Her alınan oy başına +300 puan hesaplaması (2x Risk aktifse +600, 0 oy ise -300)
+      const voteCounts = {};
+      state.players.forEach(p => { voteCounts[p.id] = 0; });
+      state.players.forEach(p => {
+        if (p.voted_for_player_id && voteCounts[p.voted_for_player_id] !== undefined) {
+          voteCounts[p.voted_for_player_id]++;
+        }
+      });
+
+      state.players.forEach(p => {
+        const votes = voteCounts[p.id] || 0;
+        p.roundVotes = votes;
+        let delta = votes * 300;
+        if (p.joker_double_active) {
+          delta = votes > 0 ? votes * 600 : -300;
+        }
+        p.roundDelta = delta;
+        p.score = Math.max(0, (p.score || 0) + delta);
+
+        // Rozet istatistikleri
+        if (votes === 0) p.zero_vote_rounds = (p.zero_vote_rounds || 0) + 1;
+        if (votes > (p.max_votes_in_single_round || 0)) p.max_votes_in_single_round = votes;
+
+        // En komik an kaydı
+        if (votes >= (state.bestMoment.votes || 0) && p.selected_card_id) {
+          state.bestMoment = {
+            situation: state.currentSituation,
+            card: getCardById(p.selected_card_id),
+            winnerName: p.name,
+            votes: votes
+          };
+        }
+      });
+
+      if (state.mode === "online" && state.isAdmin) {
+        for (const p of state.players) {
+          await sb.from("players").update({ score: p.score }).eq("id", p.id);
+        }
+        await sb.from("rooms").update({ status: "reveal" }).eq("code", state.roomCode);
+      }
+
+      beginRevealPhaseUI();
+    }
+
+    function beginRevealPhaseUI() {
+      clearAllTimers();
+      state.screen = "reveal";
+      state.timer = 6;
+
+      // En yüksek oy varsa alkış, 0 oy varsa cırcır böceği
+      const anyVotes = state.players.some(p => (p.roundVotes || 0) > 0);
+      SoundFX.play(anyVotes ? "applause" : "cricket");
+      render();
+
+      // "Sonraki Tura Geç" butonu yok! Sistem otomatik geçer.
+      mainInterval = setInterval(() => {
+        state.timer--;
+        if (state.timer <= 0) {
+          clearAllTimers();
+          checkEndOfGameOrNextRound();
+        } else {
+          render();
+        }
+      }, 1000);
+    }
+
+    async function checkEndOfGameOrNextRound() {
+      const winners = state.players.filter(p => p.score >= state.targetScore);
+      if (winners.length > 1) {
+        // Beraberlik Bozucu Altın Tur (Sudden Death)
+        const sorted = [...winners].sort((a, b) => b.score - a.score);
+        if (sorted[0].score === sorted[1].score) {
+          state.suddenDeathFinalists = [sorted[0], sorted[1]];
+          startSuddenDeathDuel();
+          return;
+        }
+      }
+      if (winners.length >= 1) {
+        if (state.mode === "online" && state.isAdmin) {
+          await sb.from("rooms").update({ status: "finished" }).eq("code", state.roomCode);
+        }
+        SoundFX.play("applause");
+        state.screen = "podium";
+        render();
+        return;
+      }
+
+      state.currentRound++;
+      startNewRound();
+    }
+
+    function startSuddenDeathDuel() {
+      clearAllTimers();
+      state.screen = "sudden_death";
+      state.timer = 10;
+      state.currentSituation = getNextSituation();
+      render();
+
+      mainInterval = setInterval(() => {
+        state.timer--;
+        if (state.timer <= 0) {
+          clearAllTimers();
+          // Finalistlerden birine +300 altın puan eklenir
+          state.suddenDeathFinalists[0].score += 300;
+          state.screen = "podium";
+          SoundFX.play("applause");
+          render();
+        } else {
+          render();
+        }
+      }, 1000);
+    }
+
+    // =========================================================================
+    // 12. JOKER FONKSİYONLARI (🔄 ELİNİ YENİLE & 🔥 2X ÇİFTE RİSK)
+    // =========================================================================
+    function useRefreshHandJoker() {
+      if (state.jokerRefreshUsed || state.hasSubmittedCard) return;
+      state.jokerRefreshUsed = true;
+      const currentIds = state.hand.map(c => c.id);
+      state.hand = getRandomHand(currentIds);
+      state.selectedCardId = null;
+      SoundFX.play("tick");
+      render();
+    }
+
+    function toggleDoubleRiskJoker() {
+      if (state.jokerDoubleUsed || state.hasSubmittedCard) return;
+      state.jokerDoubleActive = !state.jokerDoubleActive;
+      SoundFX.play("tick");
+      render();
+    }
+
+    // =========================================================================
+    // 13. INSTAGRAM STORY "EFSANE AN" KARTINI PNG OLARAK İNDİRME
+    // =========================================================================
+    function downloadStoryCard() {
+      const canvas = document.createElement("canvas");
+      canvas.width = 1080;
+      canvas.height = 1920;
+      const ctx = canvas.getContext("2d");
+
+      const grad = ctx.createLinearGradient(0, 0, 0, 1920);
+      grad.addColorStop(0, "#2E1065");
+      grad.addColorStop(0.5, "#0F172A");
+      grad.addColorStop(1, "#09090F");
+      ctx.fillStyle = grad;
+      ctx.fillRect(0, 0, 1080, 1920);
+
+      ctx.fillStyle = "#C084FC";
+      ctx.font = "bold 46px sans-serif";
+      ctx.textAlign = "center";
+      ctx.fillText("🎮 MODUNU BUL • MAÇIN EFSANE ANI", 540, 220);
+
+      // Durum kutusu
+      ctx.fillStyle = "rgba(255,255,255,0.08)";
+      ctx.fillRect(90, 320, 900, 320);
+      ctx.fillStyle = "#FFFFFF";
+      ctx.font = "bold 42px sans-serif";
+      ctx.fillText(state.bestMoment.situation.slice(0, 42), 540, 460);
+      if (state.bestMoment.situation.length > 42) {
+        ctx.fillText(state.bestMoment.situation.slice(42, 84), 540, 525);
+      }
+
+      // Meme Emojisi ve Başlığı
+      ctx.font = "180px sans-serif";
+      ctx.fillText(state.bestMoment.card.emoji, 540, 980);
+      ctx.fillStyle = "#38BDF8";
+      ctx.font = "bold 54px sans-serif";
+      ctx.fillText(state.bestMoment.card.title, 540, 1160);
+
+      ctx.fillStyle = "#FBBF24";
+      ctx.font = "bold 48px sans-serif";
+      ctx.fillText("👑 Kazanan: " + state.bestMoment.winnerName + " (+" + (state.bestMoment.votes * 300) + " Puan)", 540, 1450);
+
+      ctx.fillStyle = "#71717A";
+      ctx.font = "32px sans-serif";
+      ctx.fillText("© 2026 Modunu Bul.", 540, 1780);
+
+      const link = document.createElement("a");
+      link.download = "modunu-bul-efsane-an.png";
+      link.href = canvas.toDataURL("image/png");
+      link.click();
+    }
+
+    // =========================================================================
+    // 14. ORTAK ÜST BAR (SOL ÜST KONSOL LOGOSU + TUR SAYACI + SES + SAĞ ÜST ÇIKIŞ)
+    // =========================================================================
+    function renderTopGameHeader(badgeText) {
+      const sorted = [...state.players];
+      return `
+        <div class="space-y-1.5">
+          <div class="flex items-center justify-between">
+            <button onclick="requestExitToMenu()" class="flex items-center gap-1.5 text-xs font-extrabold text-white hover:text-purple-300" title="Ana Menüye Dön">
+              <span class="w-7 h-7 rounded-xl glass-card neon-border-purple flex items-center justify-center text-sm">🎮</span>
+              <span>Modunu Bul.</span>
+            </button>
+            <span class="px-2.5 py-0.5 rounded-full bg-purple-500/20 border border-purple-400/40 text-[10px] font-extrabold text-purple-300">${badgeText}</span>
+            <div class="flex items-center gap-1">
+              <button onclick="SoundFX.enabled = !SoundFX.enabled; render();" class="w-7 h-7 rounded-xl glass-card flex items-center justify-center text-xs ${SoundFX.enabled ? 'text-emerald-400' : 'text-zinc-500'}">
+                ${SoundFX.enabled ? '🔊' : '🔇'}
+              </button>
+              <button onclick="requestExitToMenu()" class="w-7 h-7 rounded-xl glass-card flex items-center justify-center text-xs text-rose-400 font-bold" title="Oyundan Çık">✕</button>
+            </div>
+          </div>
+
+          <!-- Oyuncu Profilleri ve Puanları Üstte Aynı Kutu İçinde -->
+          <div class="p-1.5 rounded-2xl glass-card grid grid-cols-4 gap-1 text-center text-[10px]">
+            ${sorted.slice(0, 4).map(p => `
+              <div class="${p.id === state.myId ? 'bg-purple-500/20 border border-purple-500/40' : ''} rounded-xl py-1 px-1 truncate">
+                <div class="font-bold text-white truncate">${p.avatar}${p.name}</div>
+                <div class="text-purple-300 font-extrabold">${p.score}</div>
+              </div>
+            `).join("")}
+          </div>
+        </div>
+      `;
+    }
+
+    // =========================================================================
+    // 15. TÜM EKRANLARIN RENDER EDİLMESİ
+    // =========================================================================
+    function render() {
+      const app = document.getElementById("app");
+      let html = "";
+
+      // 1. ANA MENÜ
+      if (state.screen === "home") {
+        html = `
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-10 h-10 rounded-2xl glass-card neon-border-purple flex items-center justify-center text-xl">🎮</div>
+              <div>
+                <div class="text-base font-extrabold leading-none">Modunu Bul.</div>
+                <div class="text-[9px] text-zinc-400 tracking-widest mt-1">PARTİ KART OYUNU</div>
+              </div>
+            </div>
+            <button onclick="SoundFX.enabled = !SoundFX.enabled; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">
+              ${SoundFX.enabled ? '🔊' : '🔇'}
+            </button>
+          </div>
+
+          <div class="mt-2">
+            <span class="text-[10px] font-bold text-sky-400 tracking-wider">● OYUN GECESİ BURADA</span>
+            <h1 class="text-3xl font-extrabold leading-tight mt-1">Bir araya gelin.<br><span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-sky-400">Gerisi oyun.</span></h1>
+            <p class="text-xs text-zinc-400 mt-1.5">Arkadaşlarını 6 haneli kodla çağır ya da Ali, Mehmet ve Osman'a meydan oku.</p>
+          </div>
+
+          <div class="relative h-40 flex items-center justify-center my-1">
+            <div class="w-24 h-32 rounded-2xl bg-purple-950/60 border border-purple-500/40 -rotate-12 translate-x-4 flex items-end p-2.5 text-purple-300 text-sm">✦</div>
+            <div class="w-28 h-36 rounded-2xl bg-gradient-to-b from-purple-700/80 to-indigo-950 neon-border-purple z-10 flex flex-col items-center justify-center">
+              <span class="text-4xl font-extrabold text-white">?</span>
+              <span class="text-xs text-purple-300 tracking-widest mt-1">•••</span>
+            </div>
+            <div class="w-24 h-32 rounded-2xl bg-purple-950/60 border border-purple-500/40 rotate-12 -translate-x-4 flex items-start justify-end p-2.5 text-purple-300 text-sm">★</div>
+          </div>
+
+          <div class="space-y-2.5">
+            <button onclick="state.mode='online'; state.screen='profile'; render();" class="w-full py-3.5 px-5 rounded-2xl btn-primary flex items-center justify-between text-sm">
+              <span class="flex items-center gap-2.5">🌐 Çevrimiçi Oyna</span>
+              <span>↗</span>
+            </button>
+            <button onclick="state.mode='bot'; state.screen='profile'; render();" class="w-full py-3.5 px-5 rounded-2xl btn-secondary flex items-center justify-between text-sm">
+              <span class="flex items-center gap-2.5">🤖 Botlarla Oyna</span>
+              <span>↗</span>
+            </button>
+            <button onclick="state.screen='howto'; render();" class="w-full py-2 text-xs text-zinc-300 flex items-center justify-center gap-1.5 hover:text-purple-300">
+              <span>❔ Nasıl Oynanır & Jokerler</span> <span>›</span>
+            </button>
+            <div class="text-center text-[11px] text-zinc-500 pt-1">© 2026 Modunu Bul.</div>
+          </div>
+        `;
+      }
+
+      // 2. NASIL OYNANIR EKRANI
+      else if (state.screen === "howto") {
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen='home'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="text-xs font-bold">Nasıl Oynanır?</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+          </div>
+          <div class="space-y-2.5 my-auto">
+            <div class="p-3 rounded-2xl glass-card border-l-4 border-l-purple-500">
+              <div class="text-xs font-bold text-purple-300">1. Durumu Oku & Meme Seç (20 Saniye)</div>
+              <p class="text-[11px] text-zinc-400 mt-1">Ortadaki durum kartına en uygun meme kartını 20 sn içinde gönder. Seçmezsen turu pas geçersin ve oy veremezsin.</p>
+            </div>
+            <div class="p-3 rounded-2xl glass-card border-l-4 border-l-sky-500">
+              <div class="text-xs font-bold text-sky-300">2. Anonim Oylama (10 Saniye)</div>
+              <p class="text-[11px] text-zinc-400 mt-1">Kartların kime ait olduğu ve oy sayıları oylama bitene kadar gizlidir. Kendi kartına oy veremezsin.</p>
+            </div>
+            <div class="p-3 rounded-2xl glass-card border-l-4 border-l-emerald-500">
+              <div class="text-xs font-bold text-emerald-300">3. Puanlama (+300 Puan) & Jokerler</div>
+              <p class="text-[11px] text-zinc-400 mt-1">Alınan her oy <strong>+300 puan</strong> kazandırır. Maçta 1 kez <strong>🔄 Elini Yenile</strong> ve 1 kez <strong>🔥 2x Çifte Risk (+600/-300)</strong> hakkın vardır!</p>
+            </div>
+          </div>
+          <button onclick="state.screen='home'; render();" class="w-full py-3.5 rounded-2xl btn-primary text-xs">Ana Menüye Dön →</button>
+        `;
+      }
+
+      // 3. OYUNCU PROFİLİ VE İSİM DOĞRULAMA EKRANI
+      else if (state.screen === "profile") {
+        const valid = isValidPlayerName(state.playerName);
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen='home'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="text-xs font-bold">${state.mode === 'online' ? '🌐 Çevrimiçi Mod' : '🤖 Botlarla Oyna'}</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">✕</button>
+          </div>
+
+          <div>
+            <span class="text-[10px] font-bold text-purple-400 uppercase tracking-wider">OYUNCU PROFİLİ</span>
+            <h2 class="text-xl font-extrabold mt-0.5">İsmini ve Avatarını Seç</h2>
+          </div>
+
+          <div class="flex flex-col items-center my-2">
+            <div class="w-20 h-20 rounded-full bg-gradient-to-tr from-purple-600 to-sky-400 p-0.5">
+              <div class="w-full h-full rounded-full bg-zinc-900 flex items-center justify-center text-4xl">${state.playerAvatar}</div>
+            </div>
+            <div class="flex gap-1.5 mt-3 flex-wrap justify-center">
+              ${AVATARS.map(av => `
+                <button onclick="state.playerAvatar='${av}'; render();" class="w-8 h-8 rounded-full glass-card ${state.playerAvatar === av ? 'neon-border-purple' : ''} flex items-center justify-center text-sm">${av}</button>
+              `).join("")}
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold block">Oyuncu Adın <span class="text-zinc-400 font-normal">(En az 3 karakter)</span></label>
+            <input
+              id="nameInput"
+              type="text"
+              value="${state.playerName}"
+              placeholder="Örn: Cem2026"
+              oninput="state.playerName = sanitizePlayerName(this.value); render();"
+              class="w-full px-4 py-3 rounded-2xl glass-card ${valid ? 'neon-border-purple' : 'border-rose-500/50'} text-sm font-bold text-white focus:outline-none"
+            />
+            <p class="text-[10px] ${valid ? 'text-emerald-400' : 'text-amber-300'}">
+              ${valid ? '✔ Harika! İsim kurallara uygun.' : 'ⓘ En az 3 karakter girin. Sayı bulunabilir, noktalama işareti kullanılamaz.'}
+            </p>
+          </div>
+
+          <div class="space-y-2">
+            <button
+              ${!valid ? 'disabled' : ''}
+              onclick="if(state.mode==='online'){ state.screen='online_choice'; } else { state.screen='setup_score'; } render();"
+              class="w-full py-3.5 rounded-2xl ${valid ? 'btn-primary' : 'glass-card text-zinc-500 cursor-not-allowed'} text-xs font-extrabold">
+              Devam Et →
+            </button>
+            <button onclick="state.screen='home'; render();" class="w-full py-2.5 rounded-xl glass-card text-[11px] text-zinc-400">
+              ← Mod Seçim Ekranına Çık
+            </button>
+          </div>
+        `;
+      }
+
+      // 4. ÇEVRİMİÇİ MASA SEÇİMİ (ODA KUR VEYA ODAYA KATIL)
+      else if (state.screen === "online_choice") {
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen='profile'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="text-xs font-bold">Çevrimiçi Masa</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+          </div>
+
+          <div>
+            <span class="text-[10px] font-bold text-purple-400 uppercase">HOŞ GELDİN ${state.playerName}</span>
+            <h2 class="text-xl font-extrabold mt-1">Masaya nasıl geçelim?</h2>
+            <p class="text-xs text-zinc-400 mt-1">Var olan bir odaya kodla katıl ya da kendi odanı kurup Admin ol.</p>
+          </div>
+
+          <div class="space-y-3 my-auto">
+            <button onclick="state.joinInput=''; state.joinError=''; state.screen='join_room'; render();" class="w-full p-4 rounded-2xl glass-card neon-border-blue text-left flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-sky-500/20 flex items-center justify-center text-2xl">🚪</div>
+                <div>
+                  <div class="text-sm font-extrabold">Var Olan Odaya Katıl</div>
+                  <div class="text-[11px] text-zinc-400">Arkadaşının 6 haneli sayısal kodunu gir</div>
+                </div>
+              </div>
+              <span class="text-sky-400 font-bold">→</span>
+            </button>
+
+            <button onclick="state.screen='setup_score'; render();" class="w-full p-4 rounded-2xl glass-card neon-border-purple text-left flex items-center justify-between">
+              <div class="flex items-center gap-3">
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/20 flex items-center justify-center text-2xl">👑</div>
+                <div>
+                  <div class="text-sm font-extrabold">Kendi Odanı Kur (Admin Ol)</div>
+                  <div class="text-[11px] text-zinc-400">Oyun serisini ve hedef puanı sen belirle</div>
+                </div>
+              </div>
+              <span class="text-purple-400 font-bold">→</span>
+            </button>
+          </div>
+
+          <button onclick="state.screen='home'; render();" class="w-full py-2.5 rounded-xl glass-card text-xs text-zinc-400">← Ana Menüye Dön</button>
+        `;
+      }
+
+      // 5. 6 HANELİ SAYISAL ODA KODU GİRİŞ EKRANI (NUMPAD)
+      else if (state.screen === "join_room") {
+        const digits = state.joinInput.padEnd(6, "_").split("");
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen='online_choice'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="text-xs font-bold">Odaya Katıl</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+          </div>
+
+          <div class="text-center">
+            <h2 class="text-lg font-extrabold">6 Haneli Oda Kodunu Gir</h2>
+            <p class="text-[11px] text-zinc-400">Oda kodu sadece rakamlardan oluşur</p>
+          </div>
+
+          <div class="grid grid-cols-6 gap-1.5 my-1">
+            ${digits.map((d, idx) => `
+              <div class="h-12 rounded-xl glass-card ${idx < state.joinInput.length ? 'neon-border-purple text-white' : 'text-zinc-500'} flex items-center justify-center font-extrabold text-base">${d}</div>
+            `).join("")}
+          </div>
+
+          ${state.joinError ? `<div class="text-center text-[11px] text-rose-400 font-semibold">${state.joinError}</div>` : ''}
+
+          <div class="grid grid-cols-3 gap-2 my-auto">
+            ${[1,2,3,4,5,6,7,8,9].map(n => `
+              <button onclick="if(state.joinInput.length<6){state.joinInput+='${n}'; SoundFX.play('tick'); render();}" class="py-3 rounded-xl glass-card font-extrabold text-sm active:bg-purple-500/30">${n}</button>
+            `).join("")}
+            <button onclick="state.joinInput=''; render();" class="py-3 rounded-xl glass-card text-[11px] text-zinc-400">Temizle</button>
+            <button onclick="if(state.joinInput.length<6){state.joinInput+='0'; SoundFX.play('tick'); render();}" class="py-3 rounded-xl glass-card font-extrabold text-sm">0</button>
+            <button onclick="state.joinInput=state.joinInput.slice(0,-1); render();" class="py-3 rounded-xl glass-card text-xs">⌫</button>
+          </div>
+
+          <button onclick="joinOnlineRoom()" class="w-full py-3.5 rounded-2xl btn-secondary text-xs">Odaya Katıl →</button>
+        `;
+      }
+
+      // 6. HEDEF PUAN SEÇİMİ (1000, 2000, 3000, 4000, 5000 - HER İKİ MODDA DA VAR)
+      else if (state.screen === "setup_score") {
+        const scores = [1000, 2000, 3000, 4000, 5000];
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen = state.mode==='online' ? 'online_choice' : 'profile'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="px-2.5 py-1 rounded-full glass-card text-[10px] font-bold">ADIM 1 / 3 • HEDEF PUAN</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+          </div>
+
+          <div>
+            <h2 class="text-xl font-extrabold">Bitiş Puanını Seç</h2>
+            <p class="text-xs text-zinc-400 mt-0.5">Oyun hangi puana ulaşıldığında sona ersin?</p>
+          </div>
+
+          <div class="p-5 rounded-3xl glass-card neon-border-purple text-center my-auto">
+            <div class="text-[10px] text-zinc-400 uppercase font-bold tracking-wider">SEÇİLEN HEDEF PUAN</div>
+            <div class="text-5xl font-extrabold mt-2 text-white">${state.targetScore}</div>
+            <div class="text-xs text-purple-300 mt-2">Her alınan oy <strong>+300 puan</strong> kazandırır</div>
+          </div>
+
+          <div>
+            <div class="text-xs font-bold mb-2">Hedef Puan Seçenekleri:</div>
+            <div class="grid grid-cols-5 gap-1.5 text-xs">
+              ${scores.map(sc => `
+                <button onclick="state.targetScore=${sc}; SoundFX.play('tick'); render();" class="py-3 rounded-xl glass-card ${state.targetScore === sc ? 'neon-border-purple text-purple-300 font-extrabold' : 'text-zinc-300'}">${sc}</button>
+              `).join("")}
+            </div>
+          </div>
+
+          <button onclick="state.screen='setup_category'; render();" class="w-full py-3.5 rounded-2xl btn-primary text-xs">Oyun Serisi Seçimine Geç →</button>
+        `;
+      }
+
+      // 7. ANA OYUN SERİSİ SEÇİMİ (6 ANA SERİ)
+      else if (state.screen === "setup_category") {
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen='setup_score'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="px-2.5 py-1 rounded-full glass-card text-[10px] font-bold">ADIM 2 / 3 • SERİ SEÇİMİ</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+          </div>
+
+          <div class="flex justify-between items-end">
+            <div>
+              <h2 class="text-lg font-extrabold">Oyun Serisini Seç</h2>
+              <p class="text-[11px] text-zinc-400">6 ana seriden birini belirle</p>
+            </div>
+            <span class="px-2.5 py-1 rounded-xl glass-card text-[10px] font-bold text-purple-300">Hedef: ${state.targetScore}</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 my-auto">
+            ${SERIES_DATA.map(cat => `
+              <button onclick="state.selectedCategory='${cat.id}'; state.selectedPack='${cat.packs[0].id}'; SoundFX.play('tick'); render();" class="p-3 rounded-2xl glass-card text-left ${state.selectedCategory === cat.id ? 'neon-border-blue' : ''}">
+                <div class="flex justify-between items-center">
+                  <span class="text-lg">${cat.icon}</span>${state.selectedCategory === cat.id ? '<span class="text-[9px] px-1.5 py-0.5 rounded-full bg-sky-400 text-black font-extrabold">SEÇİLİ</span>' : ''}
+                </div>
+                <div class="text-xs font-extrabold mt-1.5">${cat.title}</div>
+                <div class="text-[9px] text-zinc-400 mt-0.5 leading-snug">${cat.desc}</div>
+              </button>
+            `).join("")}
+          </div>
+
+          <button onclick="state.screen='setup_pack'; render();" class="w-full py-3.5 rounded-2xl btn-primary text-xs">Alt Paket Seçimine Geç →</button>
+        `;
+      }
+
+      // 8. ALT PAKET SEÇİMİ
+      else if (state.screen === "setup_pack") {
+        const currentSeries = SERIES_DATA.find(s => s.id === state.selectedCategory) || SERIES_DATA[0];
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen='setup_category'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="px-2.5 py-1 rounded-full glass-card text-[10px] font-bold">ADIM 3 / 3 • ALT PAKET</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+          </div>
+
+          <div>
+            <h2 class="text-lg font-extrabold">${currentSeries.icon} ${currentSeries.title}</h2>
+            <p class="text-[11px] text-zinc-400">Oynamak istediğin alt paketi seç:</p>
+          </div>
+
+          <div class="space-y-2 my-auto">
+            ${currentSeries.packs.map(pack => `
+              <button onclick="state.selectedPack='${pack.id}'; SoundFX.play('tick'); render();" class="w-full p-3 rounded-2xl glass-card text-left flex items-center justify-between ${state.selectedPack === pack.id ? 'neon-border-purple' : ''}">
+                <div class="pr-2">
+                  <div class="text-xs font-extrabold text-white">${pack.name}</div>
+                  <div class="text-[10px] text-zinc-400 mt-0.5">${pack.desc}</div>
+                </div>
+                <span class="w-5 h-5 rounded-full ${state.selectedPack === pack.id ? 'bg-purple-400 text-black font-bold' : 'border border-zinc-500'} flex items-center justify-center text-xs shrink-0">
+                  ${state.selectedPack === pack.id ? '✔' : ''}
+                </span>
+              </button>
+            `).join("")}
+          </div>
+
+          <button onclick="if(state.mode==='online'){ createOnlineRoom(); } else { startBotLobby(); }" class="w-full py-3.5 rounded-2xl btn-primary text-xs">
+            ${state.mode === 'online' ? '6 Haneli Oda Oluştur →' : 'Bot Odasına Geç (10 Sn) →'}
+          </button>
+        `;
+      }
+
+      // 9. BOT MODU 10 SANİYE LOBİ BEKLEME EKRANI (DİNAMİK OYUN KURALLARI İLE)
+      else if (state.screen === "bot_lobby") {
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+            <span class="text-xs font-bold">Bot Maçı Lobisi</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs text-rose-400">✕</button>
+          </div>
+
+          <div class="my-auto flex flex-col items-center text-center">
+            <div class="w-36 h-36 rounded-full border-4 border-purple-500 flex flex-col items-center justify-center shadow-[0_0_30px_rgba(168,85,247,0.35)]">
+              <span class="text-5xl font-extrabold">${state.botLobbyTimer}</span>
+              <span class="text-[10px] tracking-widest text-zinc-400 mt-1">SANİYE</span>
+            </div>
+            <h3 class="text-base font-extrabold mt-4">Maç Başlamak Üzere!</h3>
+            <p class="text-xs text-purple-300 mt-1">Ali, Mehmet ve Osman odaya katıldı.</p>
+
+            <div class="w-full p-3.5 rounded-2xl glass-card text-left mt-4 space-y-1.5">
+              <div class="text-[10px] font-extrabold text-purple-400 uppercase">📜 OYUN KURALLARI</div>
+              <p class="text-[11px] text-zinc-300">• Ortadaki duruma göre kart seçme süreniz <strong>20 saniye</strong>, oylama süreniz <strong>10 saniyedir</strong>.</p>
+              <p class="text-[11px] text-zinc-300">• Alınan her oy <strong>+300 puan</strong> kazandırır.</p>
+              <p class="text-[11px] text-emerald-400 font-bold">• ${state.targetScore} puana ulaşan ilk oyuncu oyunu kazanır!</p>
+            </div>
+          </div>
+
+          <div class="w-full py-3 rounded-2xl bg-purple-500/20 border border-purple-400/40 text-center text-xs font-bold text-purple-200">
+            ⏳ ${state.botLobbyTimer} saniye sonra otomatik başlıyor...
+          </div>
+        `;
+      }
+
+      // 10. ÇEVRİMİÇİ BEKLEME LOBİSİ (ADMİN VE OYUNCU AYRIMI + QR DAVET)
+      else if (state.screen === "lobby") {
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+            <span class="px-2.5 py-1 rounded-full ${state.isAdmin ? 'bg-amber-500/20 text-amber-300 border border-amber-400/40' : 'glass-card text-zinc-300'} text-[10px] font-bold">
+              ${state.isAdmin ? '👑 Oda Kurucusu (Admin)' : 'Misafir Oyuncu'}
+            </span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs text-rose-400">✕</button>
+          </div>
+
+          <div class="p-3.5 rounded-2xl glass-card text-center">
+            <div class="text-[10px] text-zinc-400 tracking-widest uppercase">6 HANELİ ODA KODU</div>
+            <div class="text-3xl font-extrabold tracking-widest mt-0.5 text-white">${state.roomCode}</div>
+            <div class="flex justify-center gap-2 mt-2">
+              <button onclick="navigator.clipboard.writeText('${state.roomCode}'); alert('Oda kodu kopyalandı: ${state.roomCode}');" class="px-3 py-1.5 rounded-xl bg-white/10 text-[10px] font-bold">📋 Kodu Kopyala</button>
+              <button onclick="state.screen='qr_modal'; render();" class="px-3 py-1.5 rounded-xl bg-purple-500/20 border border-purple-400/40 text-purple-200 text-[10px] font-bold">📲 QR Kod Göster</button>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex justify-between items-center text-xs font-bold mb-1.5">
+              <span>Odadaki Oyuncular (${state.players.length}/8)</span>
+              <span class="text-[10px] text-emerald-400">● Canlı Bağlantı</span>
+            </div>
+            <div class="space-y-1.5 max-h-40 overflow-y-auto">
+              ${state.players.map(p => `
+                <div class="p-2.5 rounded-xl glass-card flex items-center justify-between text-xs">
+                  <span class="font-bold">${p.avatar} ${p.name}${p.id === state.myId ? '(Sen)' : ''}</span>
+                  <span class="text-[10px] ${p.is_admin ? 'text-amber-300 font-bold' : 'text-emerald-400'}">${p.is_admin ? '👑 Admin' : '✔ Hazır'}</span>
+                </div>
+              `).join("")}
+            </div>
+          </div>
+
+          <div class="p-3 rounded-2xl glass-card text-[11px] text-zinc-300 space-y-1">
+            <div class="font-bold text-purple-300">📜 Oyun Kuralları</div>
+            <div>• Kart seçimi 20 sn, anonim oylama 10 sn sürer. Her oy <strong>+300 puan</strong> değerindedir.</div>
+            <div class="text-emerald-400 font-bold">• ${state.targetScore} puana ulaşan ilk oyuncu oyunu kazanır!</div>
+          </div>
+
+          ${state.isAdmin ? `
+            <button onclick="startNewRound()" class="w-full py-3.5 rounded-2xl btn-emerald text-xs">
+              ▶ Oyunu Başlat (Sadece Admin)
+            </button>
+          ` : `
+            <div class="w-full py-3.5 rounded-2xl glass-card text-center text-xs text-zinc-300">
+              ⏳ Admin'in oyunu başlatması bekleniyor...
+            </div>
+          `}
+        `;
+      }
+
+      // 11. QR KOD MODAL EKRANI
+      else if (state.screen === "qr_modal") {
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen='lobby'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="text-xs font-bold">📲 Hızlı Masa Daveti</span>
+            <button onclick="state.screen='lobby'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">✕</button>
+          </div>
+          <div class="my-auto p-5 rounded-3xl glass-card neon-border-emerald text-center space-y-3">
+            <div class="text-xs font-bold text-emerald-300">ARKADAŞLARIN KODLA KATILABİLİR</div>
+            <div class="text-4xl font-extrabold tracking-widest">${state.roomCode}</div>
+            <p class="text-[11px] text-zinc-400">Odaya Katıl ekranından bu 6 haneli kodu giren herkes anında lobiye düşer.</p>
+          </div>
+          <button onclick="state.screen='lobby'; render();" class="w-full py-3.5 rounded-2xl btn-emerald text-xs">Lobiye Geri Dön</button>
+        `;
+      }
+
+      // 12. TUR BAŞLANGIÇ GEÇİŞ EKRANI
+      else if (state.screen === "round_intro") {
+        html = `
+          ${renderTopGameHeader(state.currentRound + ". TUR")}
+          <div class="my-auto text-center space-y-2">
+            <span class="px-3 py-1 rounded-full glass-card text-[10px] text-purple-300">● DÖRT OYUNCU • TEK TEPKİ</span>
+            <h2 class="text-4xl font-extrabold tracking-tight pt-2">TUR ${state.currentRound}<br><span class="text-purple-400">BAŞLIYOR</span></h2>
+            <p class="text-xs text-zinc-400">Hazır ol, 20 saniye içinde en komik meme kartını seç!</p>
+          </div>
+          <div class="text-center text-[11px] text-zinc-500">Durum kartı açılıyor...</div>
+        `;
+      }
+
+      // 13. HER 5 TURDA BİR "KENDİ DURUMUNU YAZ" SERBEST TUR EKRANI
+      else if (state.screen === "custom_prompt") {
+        html = `
+          ${renderTopGameHeader(state.currentRound + ". TUR • SERBEST")}
+          <div class="my-auto space-y-3">
+            <span class="text-[10px] font-bold text-sky-400 uppercase">✍️ ÖZEL GRUP TURU (${state.timer} SN)</span>
+            <h3 class="text-lg font-extrabold">Bu Turun Durumunu Sen Yaz!</h3>
+            <textarea
+               rows="3"
+              placeholder="Örn: Geçen hafta halı sahada Osman'ın boş kaleye kaçırdığı gol..."
+              oninput="state.customPromptText = this.value;"
+              class="w-full p-3.5 rounded-2xl glass-card neon-border-blue text-xs text-white focus:outline-none"
+            >${state.customPromptText}</textarea>
+          </div>
+          <button onclick="state.currentSituation = state.customPromptText.trim() || getNextSituation(); proceedToRoundIntro();" class="w-full py-3.5 rounded-2xl btn-secondary text-xs">
+            Durumu Masaya Gönder →
+          </button>
+        `;
+      }
+
+      // 14. KART SEÇİM EKRANI (20 SANİYE + JOKERLER + İNCE VE MOBİL UYUMLU KARTLAR)
+      else if (state.screen === "picking") {
+        html = `
+          ${renderTopGameHeader(state.currentRound + ". TUR")}
+
+          <!-- Ortadaki Durum Kartı (Küçültülmüş ve Sistem Rengine Uygun) -->
+          <div class="p-3 rounded-2xl bg-gradient-to-br from-purple-700 to-indigo-950 border border-purple-400/40 flex items-center justify-between gap-2 my-1">
+            <div>
+              <span class="text-[9px] px-2 py-0.5 rounded-full bg-black/30 text-purple-200 font-bold">MODUNU BUL • DURUM KARTI</span>
+              <p class="text-xs font-extrabold leading-snug mt-1 text-white">${state.currentSituation}</p>
+            </div>
+            <div class="w-11 h-11 rounded-full border-2 ${state.timer <= 5 ? 'border-rose-400 text-rose-300 animate-pulse' : 'border-amber-400 text-white'} flex flex-col items-center justify-center shrink-0 bg-black/30">
+              <span class="text-xs font-extrabold">${state.timer}</span>
+              <span class="text-[8px]">SN</span>
+            </div>
+          </div>
+
+          <!-- Joker Barı (Elini Yenile & 2x Çifte Risk) -->
+          <div class="grid grid-cols-2 gap-2">
+            <button onclick="useRefreshHandJoker()" ${state.jokerRefreshUsed ? 'disabled' : ''} class="p-2 rounded-xl glass-card ${state.jokerRefreshUsed ? 'opacity-40' : 'border border-sky-400/40'} text-left">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] font-bold text-sky-300">🔄 Elini Yenile</span>
+                <span class="text-[8px] px-1.5 py-0.5 rounded bg-sky-500/20 text-sky-300 font-bold">${state.jokerRefreshUsed ? '0/1' : '1/1'}</span>
+              </div>
+            </button>
+            <button onclick="toggleDoubleRiskJoker()" ${state.jokerDoubleUsed ? 'disabled' : ''} class="p-2 rounded-xl ${state.jokerDoubleActive ? 'bg-amber-500/25 neon-border-amber' : 'glass-card'} ${state.jokerDoubleUsed ? 'opacity-40' : ''} text-left">
+              <div class="flex justify-between items-center">
+                <span class="text-[10px] font-bold text-amber-300">🔥 2x Çifte Risk</span>
+                <span class="text-[8px] px-1.5 py-0.5 rounded bg-amber-400 text-black font-extrabold">${state.jokerDoubleActive ? 'AKTİF' : state.jokerDoubleUsed ? '0/1' : '1/1'}</span>
+              </div>
+            </button>
+          </div>
+
+          <!-- Alt Tepki Meme Kartları (2x2 Grid - Yarısı Altta Kalmaz, Üst Üste Binmez) -->
+          <div class="grid grid-cols-2 gap-2 my-1">
+            ${state.hand.map(card => {
+              const isSelected = state.selectedCardId === card.id;
+              return `
+                <button onclick="state.selectedCardId='${card.id}'; SoundFX.play('tick'); render();" class="p-2 rounded-2xl glass-card text-left transition-all ${isSelected ? 'neon-border-blue -translate-y-0.5' : 'opacity-90'} relative">
+                  ${isSelected ? '<span class="absolute top-2 right-2 w-4 h-4 rounded-full bg-sky-400 text-black text-[9px] flex items-center justify-center font-extrabold">✔</span>' : ''}
+                  <div class="h-20 rounded-xl bg-gradient-to-br ${card.bg} flex items-center justify-center text-3xl">${card.emoji}</div>
+                  <div class="text-[10px] font-extrabold text-white mt-1.5 truncate">${card.title}</div>
+                  <div class="text-[9px] text-zinc-400 truncate">${card.sub}</div>
+                </button>
+              `;
+            }).join("")}
+          </div>
+
+          <button
+            ${!state.selectedCardId ? 'disabled' : ''}
+            onclick="submitSelectedCard()"
+            class="w-full py-3 rounded-2xl ${state.selectedCardId ? 'btn-primary' : 'glass-card text-zinc-500'} text-xs">
+            ${state.selectedCardId ? (state.jokerDoubleActive ? '🔥 2x Risk İle Kartı Gönder ⌲' : 'Bu Kartı Gönder ⌲') : 'Önce Bir Meme Kartı Seç'}
+          </button>
+        `;
+      }
+
+      // 15. KART GÖNDERİLDİ - DİĞER OYUNCULARI BEKLEME (ARKADAKİ 20 SN SÜRE İŞLER, SIFIRLANMAZ)
+      else if (state.screen === "waiting_picks") {
+        html = `
+          ${renderTopGameHeader(state.currentRound + ". TUR • " + state.timer + " SN")}
+
+          <div class="p-3.5 rounded-2xl glass-card neon-border-emerald text-center space-y-1 my-1">
+            <div class="text-2xl">✔</div>
+            <div class="text-sm font-extrabold text-emerald-300">Kartın Gönderildi!</div>
+            <p class="text-[10px] text-zinc-400">20 saniyelik süre sıfırlanmaz; süre bitince (${state.timer} sn) oylama otomatik açılır.</p>
+          </div>
+
+          <div class="space-y-1.5 my-auto">
+            <div class="text-[10px] font-bold text-zinc-400 uppercase">MASADAKİ OYUNCU DURUMLARI</div>
+            ${state.players.map(p => `
+              <div class="p-2.5 rounded-xl glass-card flex items-center justify-between text-xs">
+                <span class="font-bold">${p.avatar}${p.name}</span>
+                <span class="text-[10px] ${p.selected_card_id ? 'text-emerald-400 font-bold' : 'text-amber-300'}">
+                  ${p.selected_card_id ? '✔ Kart Seçti' : '⏳ Seçiyor...'}
+                </span>
+              </div>
+            `).join("")}
+          </div>
+
+          <div class="w-full py-2.5 rounded-xl bg-purple-500/20 border border-purple-500/30 text-center text-[11px] font-bold text-purple-200">
+            ⏱ Oylamanın başlamasına ${state.timer} saniye...
+          </div>
+        `;
+      }
+
+      // 16. SÜRE DOLDU / PAS GEÇME EKRANI
+      else if (state.screen === "timeout_pass") {
+        html = `
+          ${renderTopGameHeader(state.currentRound + ". TUR • SÜRE BİTTİ")}
+          <div class="my-auto p-5 rounded-3xl glass-card neon-border-amber text-center space-y-3">
+            <div class="text-4xl">⌛</div>
+            <h3 class="text-base font-extrabold text-amber-300">20 Saniye Doldu, Kart Seçmedin!</h3>
+            <p class="text-xs text-zinc-300">Süre bittiğinde kart seçmeyen oyuncu bu tur herhangi bir şey seçemez ve oylamada oy kullanamaz.</p>
+          </div>
+          <div class="text-center text-xs text-zinc-400">Oylama ekranına geçiliyor...</div>
+        `;
+      }
+
+      // 17. ANONİM OYLAMA EKRANI (10 SANİYE - İSİMLER VE OY SAYILARI GİZLİ, KENDİ KARTINA OY VEREMEZ)
+      else if (state.screen === "voting") {
+        const submittedPlayers = state.players.filter(p => p.selected_card_id);
+        html = `
+          ${renderTopGameHeader("⏱ " + state.timer + " SN OYLAMA")}
+
+          <div class="p-2.5 rounded-xl glass-card text-[11px] text-zinc-200">
+            <span class="text-purple-400 font-bold">Durum:</span> ${state.currentSituation}
+          </div>
+
+          <div class="flex justify-between items-center">
+            <h3 class="text-xs font-extrabold">En Komik Kartı Oyla!</h3>
+            <span class="text-[9px] text-zinc-400">Kart sahipleri ve oylar gizli</span>
+          </div>
+
+          <div class="grid grid-cols-2 gap-2 my-auto">
+            ${submittedPlayers.map(p => {
+              const card = getCardById(p.selected_card_id);
+              const isMine = p.id === state.myId;
+              const isVoted = state.votedPlayerId === p.id;
+              return `
+                <div class="p-2 rounded-2xl glass-card ${isVoted ? 'neon-border-emerald' : ''} ${isMine ? 'opacity-55' : ''} flex flex-col justify-between">
+                  <div class="h-20 rounded-xl bg-gradient-to-br ${card.bg} flex items-center justify-center text-3xl">${card.emoji}</div>
+                  <div class="text-[10px] font-extrabold mt-1 truncate">${card.title}</div>${isMine ? `
+                    <div class="w-full mt-1.5 py-1.5 rounded-lg bg-zinc-800 text-zinc-400 text-[9px] text-center font-bold">🔒 Senin Kartın</div>
+                  ` : !state.hasSubmittedCard ? `
+                    <div class="w-full mt-1.5 py-1.5 rounded-lg bg-zinc-800 text-zinc-500 text-[9px] text-center font-bold">Pas Geçtin</div>
+                  ` : state.votedPlayerId ? `
+                    <div class="w-full mt-1.5 py-1.5 rounded-lg ${isVoted ? 'bg-emerald-500 text-black' : 'bg-zinc-800 text-zinc-500'} text-[9px] text-center font-extrabold">${isVoted ? '✔ OY VERİLDİ' : 'Kilitli'}</div>
+                  ` : `
+                    <button onclick="castVote('${p.id}')" class="w-full mt-1.5 py-1.5 rounded-lg btn-primary text-[10px]">👍 OY VER</button>
+                  `}
+                </div>
+              `;
+            }).join("")}
+          </div>
+
+          <!-- Canlı Tepki Emoji Barı -->
+          <div class="grid grid-cols-4 gap-1.5">
+            <button onclick="spawnEmoji('😂')" class="py-1.5 rounded-xl glass-card text-sm">😂</button>
+            <button onclick="spawnEmoji('💀')" class="py-1.5 rounded-xl glass-card text-sm">💀</button>
+            <button onclick="spawnEmoji('🔥')" class="py-1.5 rounded-xl glass-card text-sm">🔥</button>
+            <button onclick="spawnEmoji('🍅')" class="py-1.5 rounded-xl bg-rose-500/20 border border-rose-500/40 text-[10px] font-bold text-rose-300">🍅 Domates</button>
+          </div>
+        `;
+      }
+
+      // 18. TUR SONU AÇIKLAMA EKRANI (KİMİN ATTIĞI VE KAÇ OY ALDIĞI BELLİ OLUR, OTOMATİK GEÇER)
+      else if (state.screen === "reveal") {
+        const sorted = [...state.players].sort((a, b) => (b.roundVotes || 0) - (a.roundVotes || 0));
+        html = `
+          ${renderTopGameHeader(state.currentRound + ". TUR SONUCU")}
+
+          <div>
+            <h3 class="text-sm font-extrabold">Kart Sahipleri & Oylar Açıklandı!</h3>
+            <p class="text-[10px] text-zinc-400">Her oy +300 puan kazandırdı (Hedef: ${state.targetScore})</p>
+          </div>
+
+          <div class="space-y-2 my-auto">
+            ${sorted.map(p => {
+              const card = p.selected_card_id ? getCardById(p.selected_card_id) : null;
+              return `
+                <div class="p-2.5 rounded-2xl glass-card ${(p.roundVotes || 0) > 0 ? 'neon-border-emerald' : ''} flex items-center justify-between">
+                  <div class="flex items-center gap-2.5">
+                    <div class="w-10 h-10 rounded-xl bg-zinc-800 flex items-center justify-center text-xl">${card ? card.emoji : '⌛'}</div>
+                    <div>
+                      <div class="text-xs font-extrabold">${p.avatar}${p.name} <span class="text-[10px] text-emerald-400">(${p.roundVotes || 0} Oy)</span></div>
+                      <div class="text-[10px] text-zinc-400">${card ? card.title : 'Kart Seçmedi'} • Toplam: <strong>${p.score} Puan</strong></div>
+                    </div>
+                  </div>
+                  <span class="text-xs font-extrabold ${(p.roundDelta || 0) >= 0 ? 'text-emerald-400' : 'text-rose-400'}">
+                    ${(p.roundDelta || 0) >= 0 ? '+' + (p.roundDelta || 0) : p.roundDelta}
+                  </span>
+                </div>
+              `;
+            }).join("")}
+          </div>
+
+          <div class="space-y-1">
+            <div class="text-center text-[10px] text-purple-300 font-bold">${state.timer} sn içinde sonraki tura otomatik geçiliyor...</div>
+            <div class="w-full h-1.5 rounded-full bg-zinc-800 overflow-hidden">
+              <div class="h-full bg-gradient-to-r from-purple-500 to-sky-400" style="width:${(state.timer / 6) * 100}%"></div>
+            </div>
+          </div>
+        `;
+      }
+
+      // 19. BERABERLİK BOZUCU ALTIN TUR (SUDDEN DEATH)
+      else if (state.screen === "sudden_death") {
+        const [f1, f2] = state.suddenDeathFinalists;
+        html = `
+          ${renderTopGameHeader("⚡ ALTIN TUR • " + state.timer + " SN")}
+          <div class="my-auto p-5 rounded-3xl glass-card neon-border-amber text-center space-y-4">
+            <span class="px-3 py-1 rounded-full bg-amber-500/20 text-amber-300 text-[10px] font-extrabold">BERABERLİK BOZUCU FİNAL DÜELLOSU</span>
+            <div class="grid grid-cols-3 items-center">
+              <div>
+                <div class="text-3xl">${f1.avatar}</div>
+                <div class="text-xs font-extrabold mt-1">${f1.name}</div>
+                <div class="text-[10px] text-amber-300">${f1.score}</div>
+              </div>
+              <div class="text-2xl font-extrabold text-amber-400">⚡ VS ⚡</div>
+              <div>
+                <div class="text-3xl">${f2.avatar}</div>
+                <div class="text-xs font-extrabold mt-1">${f2.name}</div>
+                <div class="text-[10px] text-amber-300">${f2.score}</div>
+              </div>
+            </div>
+            <p class="text-xs text-zinc-300">${state.currentSituation}</p>
+          </div>
+          <div class="text-center text-xs text-amber-300 font-bold">Şampiyon belirleniyor...</div>
+        `;
+      }
+
+      // 20. ŞAMPİYONLAR PODYUMU (1., 2. VE 3. SIRALAMA - KRAL TACI İSMİ KAPATMAZ)
+      else if (state.screen === "podium") {
+        const ranked = [...state.players].sort((a, b) => b.score - a.score);
+        const first = ranked[0] || { name: "-", avatar: "😎", score: 0 };
+        const second = ranked[1] || { name: "-", avatar: "🤖", score: 0 };
+        const third = ranked[2] || { name: "-", avatar: "🤖", score: 0 };
+
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+            <span class="text-[10px] font-bold text-amber-300 tracking-wider uppercase">🏆 OYUN SONA ERDİ</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs text-rose-400">✕</button>
+          </div>
+
+          <div class="text-center">
+            <h2 class="text-2xl font-extrabold">ŞAMPİYONLAR</h2>
+            <p class="text-[11px] text-zinc-400">Hedeflenen ${state.targetScore} puana ulaşıldı!</p>
+          </div>
+
+          <div class="grid grid-cols-3 gap-2 items-end pt-4 my-auto text-center">
+            <!-- 2. Oyuncu -->
+            <div class="flex flex-col items-center">
+              <div class="w-12 h-12 rounded-full glass-card border border-sky-400 flex items-center justify-center text-xl">${second.avatar}</div>
+              <div class="text-xs font-bold mt-1.5 truncate max-w-full">${second.name}</div>
+              <div class="text-[10px] text-sky-300 font-extrabold mb-1.5">${second.score}</div>
+              <div class="w-full h-20 rounded-t-2xl glass-card flex flex-col items-center justify-center">
+                <span class="text-xl font-extrabold">2</span>
+                <span class="text-[8px] text-zinc-400">İKİNCİ</span>
+              </div>
+            </div>
+
+            <!-- 1. Şampiyon (Kral Tacı En Üstte, İsim Aşağıda Net Görünür) -->
+            <div class="flex flex-col items-center">
+              <span class="text-2xl mb-1 drop-shadow-[0_0_10px_rgba(251,191,36,0.9)]">👑</span>
+              <div class="w-14 h-14 rounded-full bg-purple-500/30 neon-border-purple flex items-center justify-center text-2xl">${first.avatar}</div>
+              <div class="text-xs font-extrabold text-amber-300 mt-1.5 truncate max-w-full">${first.name}</div>
+              <div class="text-[11px] text-white font-extrabold mb-1.5">${first.score}</div>
+              <div class="w-full h-28 rounded-t-2xl bg-gradient-to-b from-purple-600/80 to-indigo-950 neon-border-purple flex flex-col items-center justify-center">
+                <span class="text-2xl font-extrabold">1</span>
+                <span class="text-[8px] text-purple-200 font-bold tracking-wider">ŞAMPİYON</span>
+              </div>
+            </div>
+
+            <!-- 3. Oyuncu -->
+            <div class="flex flex-col items-center">
+              <div class="w-12 h-12 rounded-full glass-card border border-zinc-600 flex items-center justify-center text-xl">${third.avatar}</div>
+              <div class="text-xs font-bold mt-1.5 truncate max-w-full">${third.name}</div>
+              <div class="text-[10px] text-zinc-400 font-extrabold mb-1.5">${third.score}</div>
+              <div class="w-full h-16 rounded-t-2xl glass-card flex flex-col items-center justify-center">
+                <span class="text-xl font-extrabold">3</span>
+                <span class="text-[8px] text-zinc-400">ÜÇÜNCÜ</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="state.screen='badges'; render();" class="py-2.5 rounded-xl glass-card text-[11px] font-bold text-purple-300">🏅 Gece Rozetleri</button>
+              <button onclick="state.screen='story_card'; render();" class="py-2.5 rounded-xl glass-card text-[11px] font-bold text-sky-300">📸 Efsane An</button>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="confirmExitToMenu()" class="py-2.5 rounded-xl glass-card text-xs font-bold">Ana Menü</button>
+              <button onclick="if(state.mode==='bot'){ startBotLobby(); } else { state.players.forEach(p=>p.score=0); startNewRound(); }" class="py-2.5 rounded-xl btn-primary text-xs">↻ Tekrar Oyna</button>
+            </div>
+          </div>
+        `;
+      }
+
+      // 21. MAÇ SONU ROZETLER EKRANI
+      else if (state.screen === "badges") {
+        const sortedByScore = [...state.players].sort((a, b) => b.score - a.score);
+        const mizahsor = sortedByScore[0] || state.players[0];
+        const sonSaniye = [...state.players].sort((a, b) => (b.last_second_picks || 0) - (a.last_second_picks || 0))[0] || state.players[0];
+        const buzdolabi = [...state.players].sort((a, b) => (b.zero_vote_rounds || 0) - (a.zero_vote_rounds || 0))[0] || state.players[0];
+
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen='podium'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="text-xs font-bold">🏅 Maç Sonu Unvanları</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+          </div>
+
+          <div class="space-y-2.5 my-auto">
+            <div class="p-3 rounded-2xl glass-card neon-border-purple flex items-center gap-3">
+              <div class="text-3xl">🎯</div>
+              <div>
+                <div class="text-xs font-extrabold text-purple-300">Gecenin Mizahşörü • ${mizahsor.name}</div>
+                <p class="text-[10px] text-zinc-400">En yüksek oyları toplayarak masayı kahkahaya boğdu.</p>
+              </div>
+            </div>
+            <div class="p-3 rounded-2xl glass-card neon-border-emerald flex items-center gap-3">
+              <div class="text-3xl">🐢</div>
+              <div>
+                <div class="text-xs font-extrabold text-emerald-300">Son Saniye Uzmanı • ${sonSaniye.name}</div>
+                <p class="text-[10px] text-zinc-400">Kartlarını son saniyelerde göndererek heyecan yarattı.</p>
+              </div>
+            </div>
+            <div class="p-3 rounded-2xl glass-card neon-border-blue flex items-center gap-3">
+              <div class="text-3xl">🧊</div>
+              <div>
+                <div class="text-xs font-extrabold text-sky-300">Buzdolabı • ${buzdolabi.name}</div>
+                <p class="text-[10px] text-zinc-400">En çok 0 oy çekerek masayı derin düşüncelere sevk etti.</p>
+              </div>
+            </div>
+          </div>
+
+          <button onclick="state.screen='podium'; render();" class="w-full py-3 rounded-2xl btn-primary text-xs">← Podyuma Geri Dön</button>
+        `;
+      }
+
+      // 22. EFSANE AN PAYLAŞIM KARTI EKRANI
+      else if (state.screen === "story_card") {
+        html = `
+          <div class="flex items-center justify-between">
+            <button onclick="state.screen='podium'; render();" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">←</button>
+            <span class="text-xs font-bold">📸 Maçın Efsane Anı</span>
+            <button onclick="requestExitToMenu()" class="w-8 h-8 rounded-full glass-card flex items-center justify-center text-xs">🎮</button>
+          </div>
+
+          <div class="my-auto p-4 rounded-3xl bg-gradient-to-b from-purple-900/90 via-indigo-950 to-zinc-950 neon-border-purple space-y-3 text-center">
+            <div class="flex justify-between text-[10px] text-purple-200 font-bold">
+              <span>🎮 MODUNU BUL • 2026</span>
+              <span class="px-2 py-0.5 rounded-full bg-amber-400 text-black font-extrabold">🔥 EN KOMİK AN</span>
+            </div>
+            <div class="p-3 rounded-xl bg-black/40 text-left text-xs font-bold">"${state.bestMoment.situation}"</div>
+            <div class="h-32 rounded-2xl bg-zinc-900/90 flex flex-col items-center justify-center p-2">
+              <span class="text-4xl">${state.bestMoment.card.emoji}</span>
+              <span class="text-xs font-extrabold text-purple-200 mt-2">${state.bestMoment.card.title}</span>
+            </div>
+            <div class="flex justify-between text-xs pt-1 border-t border-white/10">
+              <span class="font-extrabold text-amber-300">👑 ${state.bestMoment.winnerName}</span>
+              <span class="text-emerald-400 font-extrabold">+${(state.bestMoment.votes || 1) * 300} Puan</span>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <button onclick="downloadStoryCard()" class="w-full py-3 rounded-2xl btn-primary text-xs">📸 Hikaye Kartını İndir (PNG)</button>
+            <button onclick="state.screen='podium'; render();" class="w-full py-2.5 rounded-xl glass-card text-xs">← Podyuma Geri Dön</button>
+          </div>
+        `;
+      }
+
+      // ÇIKIŞ ONAYI MODAL (HER EKRANDA AKTİF)
+      if (state.showExitModal) {
+        html += `
+          <div class="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-6">
+            <div class="w-full max-w-xs p-5 rounded-3xl glass-card neon-border-purple text-center space-y-3">
+              <div class="w-12 h-12 mx-auto rounded-2xl bg-rose-500/20 border border-rose-500/40 flex items-center justify-center text-2xl">🚪</div>
+              <h3 class="text-base font-extrabold">Ana Menüye Dönmek İstediğine Emin Misin?</h3>
+              <p class="text-xs text-zinc-400">Aktif oyundan ayrılırsan bu maçtaki puanların sıfırlanır.</p>
+              <div class="grid grid-cols-2 gap-2 pt-2">
+                <button onclick="confirmExitToMenu()" class="py-2.5 rounded-xl bg-rose-500 text-black font-extrabold text-xs">Evet, Çık</button>
+                <button onclick="state.showExitModal=false; render();" class="py-2.5 rounded-xl glass-card text-white font-bold text-xs">Hayır, Kal</button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      app.innerHTML = html;
+    }
+
+    // Oyunu Başlat
+    render();
+  </script>
+</body>
+</html>
